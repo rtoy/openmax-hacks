@@ -1,0 +1,16 @@
+This is a stripped down copy of Chromium's customized Cygwin (available at http://src.chromium.org/svn/trunk/deps/third_party/cygwin)
+It is based on the revision 133786 of Chromium.
+
+Files included:
+bin\bash.exe
+bin\cygiconv-2.dll
+bin\cygintl-2.dll
+bin\cygintl-3.dll
+bin\cygintl-8.dll
+bin\cygncurses-8.dll
+bin\cygpath.exe
+bin\cygreadline6.dll
+bin\cygwin1.dll
+CYGWIN_LICENSE
+GPLv2.txt
+README.google
