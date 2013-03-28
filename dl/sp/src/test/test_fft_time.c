@@ -1137,19 +1137,42 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward Float FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      printf("FFT:\n");
+      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "y", "y");
+      for (n = 0; n < fft_size; ++n) {
+        printf("%4d\t%16g\t%16g\n", n, y[n].r, y[n].i);
+      }
+    }
   }
 
   if (do_inverse_test) {
+    double scale = 1.0 / fft_size;
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
+      int k;
       kiss_fft(fft_inv_spec, y, z);
+      // The inverse transform is not scaled, so we need to scale it,
+      // and the scaling needs to be included!
+      
+      for (k = 0; k < fft_size; ++k) {
+        z[k].r *= scale;
+        z[k].i *= scale;
+      }
     }
     GetUserTime(&end_time);
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse Float FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      printf("IFFT:\n");
+      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "z", "z");
+      for (n = 0; n < fft_size; ++n) {
+        printf("%4d\t%16g\t%16g\n", n, z[n].r, z[n].i);
+      }
+    }
   }
 
   FreeAlignedPointer(x_aligned);
