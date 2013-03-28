@@ -10,6 +10,7 @@
   'variables' : {
     # Override this value to build with small float FFT tables
     'big_float_fft%' : 1,
+    'kissfft%' : 0,
   },
   'target_defaults': {
     'include_dirs': [
@@ -23,6 +24,11 @@
       ['big_float_fft == 1', {
         'defines': [
           'BIG_FFT_TABLE',
+        ],
+      }],
+      ['kissfft == 1', {
+        'defines': [
+          'HAVE_KISSFFT',
         ],
       }],
     ],

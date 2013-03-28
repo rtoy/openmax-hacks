@@ -10,6 +10,7 @@
   'variables' : {
     # Override this value to build with small float FFT tables
     'big_float_fft%' : 1,
+    'kissfft%' : 0,
   },
   'targets': [
     {
@@ -96,6 +97,19 @@
         ['big_float_fft == 1', {
           'defines': [
             'BIG_FFT_TABLE',
+          ],
+        }],
+        ['OS == "android" and kissfft == 1', {
+          'defines': [
+            '__ARM_HAVE_NEON',
+            'HAVE_KISSFFT',
+          ],
+          'sources': [
+            'kiss_fft130/_kiss_fft_guts.h',
+            'kiss_fft130/kiss_fft.c',
+            'kiss_fft130/kiss_fft.h',
+            'kiss_fft130/kiss_fft_bfly2_neon.S',
+            'kiss_fft130/kiss_fft_bfly4_neon.S',
           ],
         }],
       ],
