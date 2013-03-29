@@ -189,6 +189,9 @@ void main(int argc, char* argv[]) {
     TimeSC32FFT(count, signal_value, signal_type);
     TimeRFFT16(count, signal_value, signal_type);
     TimeRFFT32(count, signal_value, signal_type);
+#if defined(HAVE_KISSFFT)
+    TimeKissFFT(count, signal_value, signal_type);
+#endif
   } else {
     switch (fft_type) {
       case 0:
@@ -1187,7 +1190,7 @@ void TimeKissFFT(int count, float signal_value, int signal_type) {
   int k;
 
   if (verbose == 0)
-    printf("Float FFT\n");
+    printf("Kiss FFT\n");
 
   for (k = min_fft_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
