@@ -120,6 +120,7 @@
             'Ne10/common',
           ],
           'sources' : [
+            'Ne10/common/NE10_mask_table.c',
             'Ne10/common/NE10_mask_table.h'
             'Ne10/inc/NE10_types.h',
             'Ne10/modules/dsp/NE10_cfft.c',
