@@ -100,44 +100,6 @@
             'BIG_FFT_TABLE',
           ],
         }],
-        ['OS == "android" and kissfft == 1', {
-          'defines': [
-            '__ARM_HAVE_NEON',
-            'HAVE_KISSFFT',
-          ],
-          'sources': [
-            'kiss_fft130/_kiss_fft_guts.h',
-            'kiss_fft130/kiss_fft.c',
-            'kiss_fft130/kiss_fft.h',
-            'kiss_fft130/kiss_fft_bfly2_neon.S',
-            'kiss_fft130/kiss_fft_bfly4_neon.S',
-          ],
-        }],
-        ['ne10 == 1', {
-          # Only including the FFT routines.
-          'include_dirs': [
-            'Ne10/inc',
-            'Ne10/common',
-          ],
-          'sources' : [
-            'Ne10/common/NE10_mask_table.c',
-            'Ne10/common/NE10_mask_table.h'
-            'Ne10/inc/NE10_types.h',
-            'Ne10/modules/dsp/NE10_cfft.c',
-            'Ne10/modules/dsp/NE10_cfft_init.c',
-            'Ne10/modules/dsp/NE10_cfft.neon.s',
-            'Ne10/modules/dsp/NE10_fir.c',
-            'Ne10/modules/dsp/NE10_fir_init.c',
-            'Ne10/modules/dsp/NE10_fir.neon.s',
-            'Ne10/modules/dsp/NE10_iir.c',
-            'Ne10/modules/dsp/NE10_iir_init.c',
-            'Ne10/modules/dsp/NE10_iir.neon.s',
-            'Ne10/modules/dsp/NE10_init_dsp.c',
-            'Ne10/modules/dsp/NE10_rfft.c',
-            'Ne10/modules/dsp/NE10_rfft_init.c',
-            'Ne10/modules/dsp/NE10_rfft.neon.c',
-           ],
-        }],
       ],
   }]
 }

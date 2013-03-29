@@ -31,11 +31,17 @@
         'defines': [
           'HAVE_KISSFFT',
         ],
+        'dependencies' : [
+          '../../../kissfft.gyp:kissfft',
+        ]
       }],
       ['ne10 == 1', {
         'defines': [
           'HAVE_NE10',
         ],
+        'dependencies' : [
+          '../../../ne10.gyp:ne10',
+        ]
       }],
     ],
   },
