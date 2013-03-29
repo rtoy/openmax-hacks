@@ -14,6 +14,8 @@
     'kissfft%' : 0,
     # Include NE10 FFTs.  Default is no.
     'ne10%' : 0,
+    # Include FFMPEG FFTs.  Default is no.
+    'ffmpeg%' : 0,
   },
   'target_defaults': {
     'include_dirs': [
@@ -43,6 +45,14 @@
         ],
         'dependencies' : [
           '../../../ne10.gyp:ne10',
+        ]
+      }],
+      ['ffmpeg == 1', {
+        'defines': [
+          'HAVE_FFMPEG',
+        ],
+        'dependencies' : [
+          '../../../ffmpeg.gyp:ffmpeg',
         ]
       }],
     ],
