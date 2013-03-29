@@ -39,6 +39,9 @@ void TimeSC32FFT(int count, float signal_value, int signal_type);
 void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
                    int signal_type);
 void TimeRFFT16(int count, float signal_value, int signal_type);
+void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
+                    int signal_type);
+void TimeSC16FFT(int count, float signal_value, int signal_type);
 void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
                    int signal_type);
 void TimeRFFT32(int count, float signal_value, int signal_type);
@@ -86,10 +89,11 @@ void TimeFFTUsage(const char* prog) {
 	  "  -f          FFT type:\n"
 	  "	         0 - Complex Float\n"
 	  "	         1 - Real Float\n"
-	  "	         2 - Complex 32-bit\n"
+	  "	         2 - Complex 16-bit\n"
 	  "	         3 - Real 16-bit\n"
-	  "	         4 - Real 32-bit\n"
-	  "	         5 - KissFFT (complex)\n"
+	  "	         4 - Complex 32-bit\n"
+	  "	         5 - Real 32-bit\n"
+	  "	         6 - KissFFT (complex)\n"
 	  "  -n logsize  Log2 of FFT size\n"
 	  "  -s scale    Scale factor for forward FFT (default = 0)\n"
 	  "  -S signal   Base value for the test signal (default = 1024)\n"
@@ -186,8 +190,9 @@ void main(int argc, char* argv[]) {
   if (test_mode) {
     TimeFloatFFT(count, signal_value, signal_type);
     TimeFloatRFFT(count, signal_value, signal_type);
-    TimeSC32FFT(count, signal_value, signal_type);
+    TimeSC16FFT(count, signal_value, signal_type);
     TimeRFFT16(count, signal_value, signal_type);
+    TimeSC32FFT(count, signal_value, signal_type);
     TimeRFFT32(count, signal_value, signal_type);
 #if defined(HAVE_KISSFFT)
     TimeKissFFT(count, signal_value, signal_type);
@@ -201,16 +206,19 @@ void main(int argc, char* argv[]) {
         TimeOneFloatRFFT(count, fft_log_size, signal_value, signal_type);
         break;
       case 2:
-        TimeOneSC32FFT(count, fft_log_size, signal_value, signal_type);
+        TimeOneSC16FFT(count, fft_log_size, signal_value, signal_type);
         break;
       case 3:
         TimeOneRFFT16(count, fft_log_size, signal_value, signal_type);
         break;
       case 4:
+        TimeOneSC32FFT(count, fft_log_size, signal_value, signal_type);
+        break;
+      case 5:
         TimeOneRFFT32(count, fft_log_size, signal_value, signal_type);
         break;
 #if defined(HAVE_KISSFFT)
-      case 5:
+      case 6:
         TimeOneKissFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
@@ -1092,6 +1100,189 @@ void TimeRFFT32(int count, float signal_value, int signal_type) {
     TimeOneRFFT32(testCount, k, signal_value, signal_type);
   }
 }
+
+void generateSC16Signal(OMX_SC16* x, OMX_SC16* fft, int size, int signal_type,
+                        float signal_value) {
+  int k;
+  struct ComplexFloat *test_signal;
+  struct ComplexFloat *true_fft;
+
+  test_signal = (struct ComplexFloat*) malloc(sizeof(*test_signal) * size);
+  true_fft = (struct ComplexFloat*) malloc(sizeof(*true_fft) * size);
+  GenerateTestSignalAndFFT(test_signal, true_fft, size, signal_type,
+                           signal_value, 0);
+
+  /*
+   * Convert the complex result to what we want
+   */
+
+  for (k = 0; k < size; ++k) {
+    x[k].Re = 0.5 + test_signal[k].Re;
+    x[k].Im = 0.5 + test_signal[k].Im;
+    fft[k].Re = 0.5 + true_fft[k].Re;
+    fft[k].Im = 0.5 + true_fft[k].Im;
+  }
+
+  free(test_signal);
+  free(true_fft);
+}
+
+void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
+                    int signal_type) {
+  OMX_SC16* x;
+  OMX_SC16* y;
+  OMX_SC16* z;
+
+  struct AlignedPtr* x_aligned;
+  struct AlignedPtr* y_aligned;
+  struct AlignedPtr* z_aligned;
+
+  OMX_SC16* y_true;
+  OMX_SC16* temp16a;
+  OMX_SC16* temp16b;
+
+  OMX_INT n, fft_spec_buffer_size;
+  OMXResult status;
+  OMXFFTSpec_C_SC16 * fft_fwd_spec = NULL;
+  OMXFFTSpec_C_SC16 * fft_inv_spec = NULL;
+  int fft_size;
+  struct timeval start_time;
+  struct timeval end_time;
+  double elapsed_time;
+
+  fft_size = 1 << fft_log_size;
+
+  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
+  y_aligned = AllocAlignedPointer(32, sizeof(*y) * fft_size);
+  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
+  y_true = (OMX_SC16*) malloc(sizeof(*y_true) * fft_size);
+  temp16a = (OMX_SC16*) malloc(sizeof(*temp16a) * fft_size);
+  temp16b = (OMX_SC16*) malloc(sizeof(*temp16b) * fft_size);
+
+  x = x_aligned->aligned_pointer_;
+  y = y_aligned->aligned_pointer_;
+  z = z_aligned->aligned_pointer_;
+
+  generateSC16Signal(x, y_true, fft_size, signal_type, signal_value);
+
+  status = omxSP_FFTGetBufSize_C_SC16(fft_log_size, &fft_spec_buffer_size);
+
+  fft_fwd_spec = (OMXFFTSpec_C_SC16*) malloc(fft_spec_buffer_size);
+  fft_inv_spec = (OMXFFTSpec_C_SC16*) malloc(fft_spec_buffer_size);
+  status = omxSP_FFTInit_C_SC16(fft_fwd_spec, fft_log_size);
+
+  status = omxSP_FFTInit_C_SC16(fft_inv_spec, fft_log_size);
+
+  if (do_forward_test) {
+    if (include_conversion) {
+      int k;
+      float factor = -1;
+
+      GetUserTime(&start_time);
+      for (k = 0; k < count; ++k) {
+        for (n = 0; n < fft_size; ++n) {
+          if (fabs(x[n].Re) > factor) {
+            factor = fabs(x[n].Re);
+          }
+          if (fabs(x[n].Im) > factor) {
+            factor = fabs(x[n].Im);
+          }
+        }
+
+        factor = ((1 << 18) - 1) / factor;
+        for (n = 0; n < fft_size; ++n) {
+          temp16a[n].Re = factor * x[n].Re;
+          temp16a[n].Im = factor * x[n].Im;
+        }
+
+        omxSP_FFTFwd_CToC_SC16_Sfs(x, y, fft_fwd_spec, 0);
+
+        factor = 1 / factor;
+        for (n = 0; n < fft_size; ++n) {
+          temp16b[n].Re = y[n].Re * factor;
+          temp16b[n].Im = y[n].Im * factor;
+        }
+      }
+      GetUserTime(&end_time);
+    } else {
+      GetUserTime(&start_time);
+      for (n = 0; n < count; ++n) {
+        omxSP_FFTFwd_CToC_SC16_Sfs(x, y, fft_fwd_spec, 0);
+      }
+      GetUserTime(&end_time);
+    }
+
+    elapsed_time = TimeDifference(&start_time, &end_time);
+
+    PrintResult("Forward SC16 FFT", fft_log_size, elapsed_time, count);
+  }
+
+  if (do_inverse_test) {
+    if (include_conversion) {
+      int k;
+      float factor = -1;
+
+      GetUserTime(&start_time);
+      for (k = 0; k < count; ++k) {
+        for (n = 0; n < fft_size; ++n) {
+          if (fabs(x[n].Re) > factor) {
+            factor = fabs(x[n].Re);
+          }
+          if (fabs(x[n].Im) > factor) {
+            factor = fabs(x[n].Im);
+          }
+        }
+        factor = ((1 << 18) - 1) / factor;
+        for (n = 0; n < fft_size; ++n) {
+          temp16a[n].Re = factor * x[n].Re;
+          temp16a[n].Im = factor * x[n].Im;
+        }
+
+        status = omxSP_FFTInv_CToC_SC16_Sfs(y, z, fft_inv_spec, 0);
+
+        factor = 1 / factor;
+        for (n = 0; n < fft_size; ++n) {
+          temp16b[n].Re = y[n].Re * factor;
+          temp16b[n].Im = y[n].Im * factor;
+        }
+      }
+      GetUserTime(&end_time);
+    } else {
+      GetUserTime(&start_time);
+      for (n = 0; n < count; ++n) {
+        status = omxSP_FFTInv_CToC_SC16_Sfs(y, z, fft_inv_spec, 0);
+      }
+      GetUserTime(&end_time);
+    }
+
+    elapsed_time = TimeDifference(&start_time, &end_time);
+
+    PrintResult("Inverse SC16 FFT", fft_log_size, elapsed_time, count);
+  }
+
+  FreeAlignedPointer(x_aligned);
+  FreeAlignedPointer(y_aligned);
+  FreeAlignedPointer(z_aligned);
+  free(temp16a);
+  free(temp16b);
+  free(fft_fwd_spec);
+  free(fft_inv_spec);
+}
+
+void TimeSC16FFT(int count, float signal_value, int signal_type) {
+  int k;
+  int max_order = (max_fft_order > MAX_FFT_ORDER_FIXED_POINT)
+      ? MAX_FFT_ORDER_FIXED_POINT : max_fft_order;
+
+  if (verbose == 0)
+    printf("SC16 FFT\n");
+
+  for (k = min_fft_order; k <= max_order; ++k) {
+    int testCount = ComputeCount(count, k);
+    TimeOneSC16FFT(testCount, k, signal_value, signal_type);
+  }
+}
+
 
 #if defined(HAVE_KISSFFT)
 void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
