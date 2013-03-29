@@ -10,7 +10,9 @@
   'variables' : {
     # Override this value to build with small float FFT tables
     'big_float_fft%' : 1,
+    # Include KissFFT.  Default is no.
     'kissfft%' : 0,
+    # Include NE10 FFTs.  Default is no.
     'ne10%' : 0,
   },
   'target_defaults': {
