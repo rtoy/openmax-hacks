@@ -27,7 +27,6 @@
         'ffmpeg/libavcodec/arm/mdct_neon.S',
         'ffmpeg/libavcodec/avfft.c',
         'ffmpeg/libavcodec/avfft.h',
-        'ffmpeg/libavcodec/cpu.c',
         'ffmpeg/libavcodec/dct.h',
         'ffmpeg/libavcodec/fft.c',
         'ffmpeg/libavcodec/fft.h',
