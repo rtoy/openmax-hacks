@@ -154,7 +154,7 @@ void main(int argc, char* argv[]) {
   int signal_type = 0;
   int test_mode = 1;
   int count = 100;
-  int fft_type = 0;
+  int fft_type = -1;
   int fft_type_given = 0;
 
   int opt;
@@ -220,26 +220,34 @@ void main(int argc, char* argv[]) {
     }
   }
 
-  if (test_mode && fft_type_given)
-    printf("Warning:  -f ignored when -T not specified\n");
-
   if (test_mode) {
-    TimeFloatFFT(count, signal_value, signal_type);
-    TimeFloatRFFT(count, signal_value, signal_type);
-    TimeSC16FFT(count, signal_value, signal_type);
-    TimeRFFT16(count, signal_value, signal_type);
-    TimeSC32FFT(count, signal_value, signal_type);
-    TimeRFFT32(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 0))
+      TimeFloatFFT(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 1))
+      TimeFloatRFFT(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 2))
+      TimeSC16FFT(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 3))
+      TimeRFFT16(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 4))
+      TimeSC32FFT(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 5))
+      TimeRFFT32(count, signal_value, signal_type);
 #if defined(HAVE_KISSFFT)
-    TimeKissFFT(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 6))
+      TimeKissFFT(count, signal_value, signal_type);
 #endif
 #if defined(HAVE_NE10)
-    TimeNE10FFT(count, signal_value, signal_type);
-    TimeNE10RFFT(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 7))
+      TimeNE10FFT(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 8))
+      TimeNE10RFFT(count, signal_value, signal_type);
 #endif
 #if defined(HAVE_FFMPEG)
-    TimeFFmpegFFT(count, signal_value, signal_type);
-    TimeFFmpegRFFT(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 9))
+      TimeFFmpegFFT(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 10))
+      TimeFFmpegRFFT(count, signal_value, signal_type);
 #endif
   } else {
     switch (fft_type) {
@@ -1879,6 +1887,12 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
   fft_fwd_spec = av_rdft_init(fft_log_size, DFT_R2C);
   fft_inv_spec = av_rdft_init(fft_log_size, IDFT_C2R);
 
+  if (!fft_fwd_spec || !fft_inv_spec) {
+    fprintf(stderr, "TimeOneFFmpegRFFT:  Could not initialize structures for order %d\n",
+            fft_log_size);
+    return;
+  }
+
   if (do_forward_test) {
     /*
      * Measure how much time we spend doing copies, so we can subtract
@@ -1986,11 +2000,16 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
 
 void TimeFFmpegRFFT(int count, float signal_value, int signal_type) {
   int k;
+  int min_order;
 
   if (verbose == 0)
     printf("Float FFmpeg RFFT\n");
 
-  for (k = min_fft_order; k <= max_fft_order; ++k) {
+  /* The minimum FFT order for rdft is 4. */
+
+  min_order = min_fft_order < 4 ? 4 : min_fft_order;
+  
+  for (k = min_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneFFmpegRFFT(testCount, k, signal_value, signal_type);
   }
