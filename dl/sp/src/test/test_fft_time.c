@@ -28,6 +28,10 @@
 #include "dl/Ne10/inc/NE10_types.h"
 #endif
 
+#if defined(HAVE_FFMPEG)
+#include "dl/ffmpeg/libavcodec/avfft.h"
+#endif
+
 #define MAX_FFT_ORDER   TWIDDLE_TABLE_ORDER
 #define MAX_FFT_ORDER_FIXED_POINT 12
 
@@ -63,6 +67,12 @@ void TimeNE10FFT(int count, float signal_value, int signal_type);
 void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 		    int signal_type);
 void TimeNE10RFFT(int count, float signal_value, int signal_type);
+#endif
+
+#if defined(HAVE_FFMPEG)
+void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
+		      int signal_type);
+void TimeFFmpegFFT(int count, float signal_value, int signal_type);
 #endif
 
 static int verbose = 1;
@@ -112,6 +122,9 @@ void TimeFFTUsage(const char* prog) {
 #if defined(HAVE_NE10)
           "	         7 - NE10 complex float\n"
           "	         8 - NE10 real float\n"
+#endif
+#if defined(HAVE_FFMPEG)
+          "	         9 - FFmpeg complex float\n"
 #endif
 	  "  -n logsize  Log2 of FFT size\n"
 	  "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -220,6 +233,9 @@ void main(int argc, char* argv[]) {
     TimeNE10FFT(count, signal_value, signal_type);
     TimeNE10RFFT(count, signal_value, signal_type);
 #endif
+#if defined(HAVE_FFMPEG)
+    TimeFFmpegFFT(count, signal_value, signal_type);
+#endif
   } else {
     switch (fft_type) {
       case 0:
@@ -251,6 +267,11 @@ void main(int argc, char* argv[]) {
         break;
       case 8:
         TimeOneNE10RFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+#endif
+#if defined(HAVE_NE10)
+      case 9:
+        TimeOneFFmpegFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
       default:
@@ -1658,6 +1679,99 @@ void TimeNE10RFFT(int count, float signal_value, int signal_type) {
   for (k = 7; k <= 11; k += 2) {
     int testCount = ComputeCount(count, k);
     TimeOneNE10RFFT(testCount, k, signal_value, signal_type);
+  }
+}
+
+#endif
+
+#if defined(HAVE_FFMPEG)
+void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
+                     int signal_type) {
+  struct AlignedPtr* x_aligned;
+  struct AlignedPtr* y_aligned;
+  struct AlignedPtr* z_aligned;
+
+  struct ComplexFloat* x;
+  struct ComplexFloat* y;
+  OMX_FC32* z;
+
+  struct ComplexFloat* y_true;
+
+  OMX_INT n, fft_spec_buffer_size;
+  FFTContext* fft_fwd_spec = NULL;;
+  FFTContext* fft_inv_spec = NULL;
+  int fft_size;
+  struct timeval start_time;
+  struct timeval end_time;
+  double elapsed_time;
+
+  fft_size = 1 << fft_log_size;
+
+  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
+  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
+  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
+
+  y_true = (struct ComplexFloat*) malloc(sizeof(*y_true) * fft_size);
+
+  x = x_aligned->aligned_pointer_;
+  y = y_aligned->aligned_pointer_;
+  z = z_aligned->aligned_pointer_;
+
+  GenerateTestSignalAndFFT(x, y_true, fft_size, signal_type, signal_value, 0);
+
+  fft_fwd_spec = av_fft_init(fft_log_size, 0);
+  fft_inv_spec = av_fft_init(fft_log_size, 1);
+
+  if (do_forward_test) {
+    GetUserTime(&start_time);
+    for (n = 0; n < count; ++n) {
+      memcpy(y, x, sizeof(*y) * fft_size);
+      av_fft_permute(fft_fwd_spec, (FFTComplex*) y);
+      av_fft_calc(fft_fwd_spec, (FFTComplex*) y);
+    }
+    GetUserTime(&end_time);
+
+    elapsed_time = TimeDifference(&start_time, &end_time);
+
+    PrintResult("Forward FFmpeg FFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      printf("FFT:\n");
+      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "y", "y");
+      for (n = 0; n < fft_size; ++n) {
+        printf("%4d\t%16g\t%16g\n", n, y[n].Re, y[n].Im);
+      }
+    }
+  }
+
+  if (do_inverse_test) {
+    GetUserTime(&start_time);
+    for (n = 0; n < count; ++n) {
+      omxSP_FFTInv_CToC_FC32_Sfs(y, z, fft_inv_spec);
+    }
+    GetUserTime(&end_time);
+
+    elapsed_time = TimeDifference(&start_time, &end_time);
+
+    PrintResult("Inverse FFmpeg FFT", fft_log_size, elapsed_time, count);
+  }
+
+  FreeAlignedPointer(x_aligned);
+  FreeAlignedPointer(y_aligned);
+  FreeAlignedPointer(z_aligned);
+  free(y_true);
+  free(fft_fwd_spec);
+  free(fft_inv_spec);
+}
+
+void TimeFFmpegFFT(int count, float signal_value, int signal_type) {
+  int k;
+
+  if (verbose == 0)
+    printf("FFmpeg FFT\n");
+
+  for (k = min_fft_order; k <= max_fft_order; ++k) {
+    int testCount = ComputeCount(count, k);
+    TimeOneFFmpegFFT(testCount, k, signal_value, signal_type);
   }
 }
 
