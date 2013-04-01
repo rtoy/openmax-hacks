@@ -282,7 +282,7 @@ void main(int argc, char* argv[]) {
         TimeOneNE10RFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
-#if defined(HAVE_NE10)
+#if defined(HAVE_FFMPEG)
       case 9:
         TimeOneFFmpegFFT(count, fft_log_size, signal_value, signal_type);
         break;
