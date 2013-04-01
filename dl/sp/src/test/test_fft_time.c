@@ -73,6 +73,9 @@ void TimeNE10RFFT(int count, float signal_value, int signal_type);
 void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
 		      int signal_type);
 void TimeFFmpegFFT(int count, float signal_value, int signal_type);
+void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
+                       int signal_type);
+void TimeFFmpegRFFT(int count, float signal_value, int signal_type);
 #endif
 
 static int verbose = 1;
@@ -125,6 +128,7 @@ void TimeFFTUsage(const char* prog) {
 #endif
 #if defined(HAVE_FFMPEG)
           "	         9 - FFmpeg complex float\n"
+          "	        10 - FFmpeg real float\n"
 #endif
 	  "  -n logsize  Log2 of FFT size\n"
 	  "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -235,6 +239,7 @@ void main(int argc, char* argv[]) {
 #endif
 #if defined(HAVE_FFMPEG)
     TimeFFmpegFFT(count, signal_value, signal_type);
+    TimeFFmpegRFFT(count, signal_value, signal_type);
 #endif
   } else {
     switch (fft_type) {
@@ -272,6 +277,9 @@ void main(int argc, char* argv[]) {
 #if defined(HAVE_NE10)
       case 9:
         TimeOneFFmpegFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+      case 10:
+        TimeOneFFmpegRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
       default:
@@ -1704,6 +1712,7 @@ void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
+  double copy_time = 0.0;
 
   fft_size = 1 << fft_log_size;
 
@@ -1722,6 +1731,17 @@ void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
   fft_fwd_spec = av_fft_init(fft_log_size, 0);
   fft_inv_spec = av_fft_init(fft_log_size, 1);
 
+  /*
+   * Measure how much time we spend doing copies, so we can subtract
+   * them from the elapsed time for the FFTs.
+   */
+  GetUserTime(&start_time);
+  for (n = 0; n < count; ++n) {
+    memcpy(z, y_true, sizeof(*z) * fft_size);
+  }
+  GetUserTime(&end_time);
+  copy_time = TimeDifference(&start_time, &end_time);
+
   if (do_forward_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
@@ -1732,6 +1752,16 @@ void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
     GetUserTime(&end_time);
 
     elapsed_time = TimeDifference(&start_time, &end_time);
+
+    if (verbose > 255) {
+      printf("FFT time          :  %g sec\n", elapsed_time);
+      printf("Time for copying  :  %g sec\n", copy_time);
+    }
+
+    elapsed_time -= copy_time;
+
+    if (verbose > 255)
+      printf("Effective FFT time:  %g sec\n", elapsed_time);
 
     PrintResult("Forward FFmpeg FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
@@ -1744,16 +1774,18 @@ void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
   }
 
   if (do_inverse_test) {
+    float scale = 1.0 / fft_size;
+
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       int m;
-      float scale;
       
       memcpy(z, y_true, sizeof(*z) * fft_size);
       av_fft_permute(fft_inv_spec, (FFTComplex*) z);
       av_fft_calc(fft_inv_spec, (FFTComplex*) z);
 
-      scale = 1.0 / fft_size;
+      // av_fft_calc doesn't scale the inverse by 1/N, so we need to
+      // do it since the other FFTs do.
       for (m = 0; m < fft_size; ++m) {
         z[m].Re *= scale;
         z[m].Im *= scale;
@@ -1762,6 +1794,16 @@ void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
     GetUserTime(&end_time);
 
     elapsed_time = TimeDifference(&start_time, &end_time);
+
+    if (verbose > 255) {
+      printf("FFT time          :  %g sec\n", elapsed_time);
+      printf("Time for copying  :  %g sec\n", copy_time);
+    }
+
+    elapsed_time -= copy_time;
+
+    if (verbose > 255)
+      printf("Effective FFT time:  %g sec\n", elapsed_time);
 
     PrintResult("Inverse FFmpeg FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
@@ -1790,6 +1832,167 @@ void TimeFFmpegFFT(int count, float signal_value, int signal_type) {
   for (k = min_fft_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneFFmpegFFT(testCount, k, signal_value, signal_type);
+  }
+}
+
+void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
+                      int signal_type) {
+  OMX_F32* x;                   /* Source */
+  OMX_F32* y;                   /* Transform */
+  OMX_F32* z;                   /* Inverse transform */
+
+  OMX_F32* y_true;              /* True FFT */
+
+  struct AlignedPtr* x_aligned;
+  struct AlignedPtr* y_aligned;
+  struct AlignedPtr* z_aligned;
+
+
+  OMX_INT n, fft_spec_buffer_size;
+  OMXResult status;
+  RDFTContext* fft_fwd_spec;
+  RDFTContext* fft_inv_spec;
+  int fft_size;
+  struct timeval start_time;
+  struct timeval end_time;
+  double elapsed_time;
+  double copy_time = 0.0;
+
+  fft_size = 1 << fft_log_size;
+
+  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
+  /* The transformed value is in CCS format and is has fft_size + 2 values */
+  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
+  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
+
+  x = x_aligned->aligned_pointer_;
+  y = y_aligned->aligned_pointer_;
+  z = z_aligned->aligned_pointer_;
+
+  y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
+
+  GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
+                          signal_value);
+
+  status = omxSP_FFTGetBufSize_R_F32(fft_log_size, &fft_spec_buffer_size);
+
+  fft_fwd_spec = av_rdft_init(fft_log_size, DFT_R2C);
+  fft_inv_spec = av_rdft_init(fft_log_size, IDFT_C2R);
+
+  if (do_forward_test) {
+    /*
+     * Measure how much time we spend doing copies, so we can subtract
+     * them from the elapsed time for the FFTs.
+     */
+    GetUserTime(&start_time);
+    for (n = 0; n < count; ++n) {
+      memcpy(y, x, sizeof(*y) * fft_size);
+    }
+    GetUserTime(&end_time);
+    copy_time = TimeDifference(&start_time, &end_time);
+
+    
+    GetUserTime(&start_time);
+    for (n = 0; n < count; ++n) {
+      memcpy(y, x, sizeof(*y) * fft_size);
+      av_rdft_calc(fft_fwd_spec, (FFTSample*) y);
+    }
+    GetUserTime(&end_time);
+
+    elapsed_time = TimeDifference(&start_time, &end_time);
+
+    if (verbose > 255) {
+      printf("FFT time          :  %g sec\n", elapsed_time);
+      printf("Time for copying  :  %g sec\n", copy_time);
+    }
+
+    elapsed_time -= copy_time;
+
+    if (verbose > 255)
+      printf("Effective FFT time:  %g sec\n", elapsed_time);
+
+    PrintResult("Forward Float FFmpeg RFFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      OMX_FC32* fft = (OMX_FC32*) y;
+      printf("FFT:\n");
+      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "y", "y");
+      for (n = 0; n < fft_size / 2; ++n) {
+        printf("%4d\t%16g\t%16g\n", n, fft[n].Re, fft[n].Im);
+      }
+    }
+  }
+
+  if (do_inverse_test) {
+    float scale = 2.0 / fft_size;
+    FFTSample* true = (FFTSample*) malloc(sizeof(*true) * (fft_size + 2));
+
+    /* Copy y_true to true, but arrange the values according to what rdft wants. */
+
+    memcpy(true, y_true, sizeof(FFTSample*) * fft_size);
+    true[1] = y_true[fft_size / 2];
+
+    /*
+     * Measure how much time we spend doing copies, so we can subtract
+     * them from the elapsed time for the FFTs.
+     */
+    GetUserTime(&start_time);
+    for (n = 0; n < count; ++n) {
+      memcpy(z, true, sizeof(*z) * fft_size);
+    }
+    GetUserTime(&end_time);
+    copy_time = TimeDifference(&start_time, &end_time);
+
+    GetUserTime(&start_time);
+    for (n = 0; n < count; ++n) {
+      int m;
+      
+      memcpy(z, true, sizeof(*z) * fft_size);
+      av_rdft_calc(fft_inv_spec, (FFTSample*) z);
+
+      for (m = 0; m < fft_size; ++m) {
+        z[m] *= scale;
+      }
+    }
+    GetUserTime(&end_time);
+
+    elapsed_time = TimeDifference(&start_time, &end_time);
+
+    if (verbose > 255) {
+      printf("IFFT time          :  %g sec\n", elapsed_time);
+      printf("Time for copying   :  %g sec\n", copy_time);
+    }
+
+    elapsed_time -= copy_time;
+
+    if (verbose > 255)
+      printf("Effective IFFT time:  %g sec\n", elapsed_time);
+
+    PrintResult("Inverse Float FFmpeg RFFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      printf("IFFT:\n");
+      printf("%4s\t%10s\n", "n", "z");
+      for (n = 0; n < fft_size; ++n) {
+        printf("%4d\t%16g\t%16g\n", n, z[n], x[n]);
+      }
+    }
+  }
+
+  FreeAlignedPointer(x_aligned);
+  FreeAlignedPointer(y_aligned);
+  FreeAlignedPointer(z_aligned);
+  free(fft_fwd_spec);
+  free(fft_inv_spec);
+}
+
+void TimeFFmpegRFFT(int count, float signal_value, int signal_type) {
+  int k;
+
+  if (verbose == 0)
+    printf("Float FFmpeg RFFT\n");
+
+  for (k = min_fft_order; k <= max_fft_order; ++k) {
+    int testCount = ComputeCount(count, k);
+    TimeOneFFmpegRFFT(testCount, k, signal_value, signal_type);
   }
 }
 
