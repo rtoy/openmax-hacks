@@ -1746,13 +1746,31 @@ void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
   if (do_inverse_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      omxSP_FFTInv_CToC_FC32_Sfs(y, z, fft_inv_spec);
+      int m;
+      float scale;
+      
+      memcpy(z, y_true, sizeof(*z) * fft_size);
+      av_fft_permute(fft_inv_spec, (FFTComplex*) z);
+      av_fft_calc(fft_inv_spec, (FFTComplex*) z);
+
+      scale = 1.0 / fft_size;
+      for (m = 0; m < fft_size; ++m) {
+        z[m].Re *= scale;
+        z[m].Im *= scale;
+      }
     }
     GetUserTime(&end_time);
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
     PrintResult("Inverse FFmpeg FFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      printf("IFFT:\n");
+      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "z", "z");
+      for (n = 0; n < fft_size; ++n) {
+        printf("%4d\t%16g\t%16g\t%16g\t%16g\n", n, z[n].Re, z[n].Im, x[n].Re, x[n].Im);
+      }
+    }
   }
 
   FreeAlignedPointer(x_aligned);
