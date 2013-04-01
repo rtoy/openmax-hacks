@@ -25,6 +25,7 @@
         'ffmpeg/libavcodec/arm/fft_init_arm.c',
         'ffmpeg/libavcodec/arm/fft_neon.S',
         'ffmpeg/libavcodec/arm/mdct_neon.S',
+        'ffmpeg/libavcodec/arm/rdft_neon.S',
         'ffmpeg/libavcodec/avfft.c',
         'ffmpeg/libavcodec/avfft.h',
         'ffmpeg/libavcodec/dct.h',
@@ -32,6 +33,7 @@
         'ffmpeg/libavcodec/fft.h',
         'ffmpeg/libavcodec/fft-internal.h',
         'ffmpeg/libavcodec/mdct.c',
+        'ffmpeg/libavcodec/rdft.c',
         'ffmpeg/libavcodec/rdft.h',
         'ffmpeg/libavcodec/synth_filter.h',
 
