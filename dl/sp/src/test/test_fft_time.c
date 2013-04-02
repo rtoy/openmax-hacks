@@ -1414,7 +1414,7 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       int k;
-      kiss_fft(fft_inv_spec, y, z);
+      kiss_fft(fft_inv_spec, (kiss_fft_cpx*) y_true, z);
 
       // kiss_fft does not scale the inverse transform so do it here.
       
