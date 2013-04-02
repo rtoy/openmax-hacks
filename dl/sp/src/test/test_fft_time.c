@@ -1592,7 +1592,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   struct AlignedPtr* t_aligned;
 
 
-  OMX_INT n, fft_spec_buffer_size;
+  int n;
   ne10_result_t status;
   ne10_cfft_radix4_instance_f32_t fft_fwd_spec;
   ne10_cfft_radix4_instance_f32_t fft_inv_spec ;
@@ -1691,8 +1691,8 @@ void TimeNE10RFFT(int count, float signal_value, int signal_type) {
   int k;
 
   if (verbose == 0)
-    printf("NE10 RFFT\n");
-
+    printf("%s NE10 RFFT\n", do_forward_test ? "Forward" : "Inverse");
+  
   // The NE10 RFFT routine currently only supports sizes 128, 512, 2048. (Order 7, 9, 11)
   for (k = 7; k <= 11; k += 2) {
     int testCount = ComputeCount(count, k);
