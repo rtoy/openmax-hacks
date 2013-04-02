@@ -1365,7 +1365,7 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
   struct ComplexFloat* y_true;
 
-  OMX_INT n, fft_spec_buffer_size;
+  int n;
   kiss_fft_cfg fft_fwd_spec;
   kiss_fft_cfg fft_inv_spec;
   int fft_size;
@@ -1415,8 +1415,8 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
     for (n = 0; n < count; ++n) {
       int k;
       kiss_fft(fft_inv_spec, y, z);
-      // The inverse transform is not scaled, so we need to scale it,
-      // and the scaling needs to be included!
+
+      // kiss_fft does not scale the inverse transform so do it here.
       
       for (k = 0; k < fft_size; ++k) {
         z[k].r *= scale;
@@ -1449,8 +1449,8 @@ void TimeKissFFT(int count, float signal_value, int signal_type) {
   int k;
 
   if (verbose == 0)
-    printf("Kiss FFT\n");
-
+    printf("%s Kiss FFT\n", do_forward_test ? "Forward" : "Inverse");
+  
   for (k = min_fft_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneKissFFT(testCount, k, signal_value, signal_type);
