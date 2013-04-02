@@ -1715,7 +1715,7 @@ void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
 
   struct ComplexFloat* y_true;
 
-  OMX_INT n, fft_spec_buffer_size;
+  int n;
   FFTContext* fft_fwd_spec = NULL;;
   FFTContext* fft_inv_spec = NULL;
   int fft_size;
@@ -1837,8 +1837,8 @@ void TimeFFmpegFFT(int count, float signal_value, int signal_type) {
   int k;
 
   if (verbose == 0)
-    printf("FFmpeg FFT\n");
-
+    printf("%s FFmpeg FFT\n", do_forward_test ? "Forward" : "Inverse");
+  
   for (k = min_fft_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneFFmpegFFT(testCount, k, signal_value, signal_type);
@@ -1858,8 +1858,7 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
   struct AlignedPtr* z_aligned;
 
 
-  OMX_INT n, fft_spec_buffer_size;
-  OMXResult status;
+  int n;
   RDFTContext* fft_fwd_spec;
   RDFTContext* fft_inv_spec;
   int fft_size;
@@ -1883,8 +1882,6 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
 
   GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
                           signal_value);
-
-  status = omxSP_FFTGetBufSize_R_F32(fft_log_size, &fft_spec_buffer_size);
 
   fft_fwd_spec = av_rdft_init(fft_log_size, DFT_R2C);
   fft_inv_spec = av_rdft_init(fft_log_size, IDFT_C2R);
@@ -1927,7 +1924,7 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
     if (verbose > 255)
       printf("Effective FFT time:  %g sec\n", elapsed_time);
 
-    PrintResult("Forward Float FFmpeg RFFT", fft_log_size, elapsed_time, count);
+    PrintResult("Forward FFmpeg RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       OMX_FC32* fft = (OMX_FC32*) y;
       printf("FFT:\n");
@@ -1983,7 +1980,7 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
     if (verbose > 255)
       printf("Effective IFFT time:  %g sec\n", elapsed_time);
 
-    PrintResult("Inverse Float FFmpeg RFFT", fft_log_size, elapsed_time, count);
+    PrintResult("Inverse FFmpeg RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       printf("IFFT:\n");
       printf("%4s\t%10s\n", "n", "z");
@@ -2005,8 +2002,8 @@ void TimeFFmpegRFFT(int count, float signal_value, int signal_type) {
   int min_order;
 
   if (verbose == 0)
-    printf("Float FFmpeg RFFT\n");
-
+    printf("%s FFmpeg RFFT\n", do_forward_test ? "Forward" : "Inverse");
+  
   /* The minimum FFT order for rdft is 4. */
 
   min_order = min_fft_order < 4 ? 4 : min_fft_order;
