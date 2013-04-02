@@ -19,6 +19,7 @@
 #include "dl/sp/api/omxSP.h"
 #include "dl/sp/src/test/aligned_ptr.h"
 #include "dl/sp/src/test/gensig.h"
+#include "dl/sp/src/test/test_util.h"
 
 #if defined(HAVE_KISSFFT)
 #include "dl/kiss_fft130/kiss_fft.h"
@@ -86,7 +87,7 @@ static int do_inverse_test = 1;
 static int min_fft_order = 2;
 static int max_fft_order = MAX_FFT_ORDER;
 
-void TimeFFTUsage(const char* prog) {
+void TimeFFTUsage(char* prog) {
   fprintf(stderr, 
 	  "%s: [-hTFICA] [-f fft] [-c count] [-n logsize] [-s scale]\n"
 	  "    [-g signal-type] [-S signal value]\n"
@@ -1401,11 +1402,10 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
-      printf("FFT:\n");
-      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "y", "y");
-      for (n = 0; n < fft_size; ++n) {
-        printf("%4d\t%16g\t%16g\n", n, y[n].r, y[n].i);
-      }
+      printf("FFT Actual:\n");
+      DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
+      printf("FFT Expected:\n");
+      DumpArrayComplexFloat("true", fft_size, (OMX_FC32*) y_true);
     }
   }
 
@@ -1429,11 +1429,11 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
-      printf("IFFT:\n");
+      printf("IFFT Actual:\n");
+      DumpArrayComplexFloat("z", fft_size, (OMX_FC32*) z);
+      printf("IFFT Expected:\n");
+      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
       printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "z", "z");
-      for (n = 0; n < fft_size; ++n) {
-        printf("%4d\t%16g\t%16g\n", n, z[n].r, z[n].i);
-      }
     }
   }
 
@@ -1523,11 +1523,10 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Forward NE10 FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
-      printf("IFFT:\n");
-      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "y", "y");
-      for (n = 0; n < fft_size; ++n) {
-        printf("%4d\t%16g\t%16g\n", n, y[n].Re, y[n].Im);
-      }
+      printf("FFT Actual:\n");
+      DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
+      printf("FFT Expected:\n");
+      DumpArrayComplexFloat("true", fft_size, (OMX_FC32*) y_true);
     }
 
     free(saved_x);
@@ -1550,11 +1549,10 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Inverse NE10 FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
-      printf("IFFT:\n");
-      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "z", "z");
-      for (n = 0; n < fft_size; ++n) {
-        printf("%4d\t%16g\t%16g\n", n, z[n].Re, z[n].Im);
-      }
+      printf("IFFT Actual:\n");
+      DumpArrayComplexFloat("z", fft_size, z);
+      printf("IFFT Expected:\n");
+      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
     }
   }
 
@@ -1651,11 +1649,10 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Forward NE10 RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
-      printf("FFT:\n");
-      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "y", "y");
-      for (n = 0; n < fft_size; n++) {
-        printf("%4d\t%16g\t%16g\n", n, y[n].Re, y[n].Im);
-      }
+      printf("FFT Actual:\n");
+      DumpArrayComplexFloat("y", fft_size / 2 + 1, y);
+      printf("FFT Expected:\n");
+      DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
     }
     free(saved_x);
   }
@@ -1674,11 +1671,10 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Inverse NE10 RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
-      printf("IFFT:\n");
-      printf("%4s\t%13s[n]\n", "n", "z");
-      for (n = 0; n < fft_size; n++) {
-        printf("%4d\t%16g\n", n, z[n]);
-      }
+      printf("IFFT Actual:\n");
+      DumpArrayFloat("z", fft_size, z);
+      printf("IFFT Expected:\n");
+      DumpArrayFloat("x", fft_size, x);
     }
   }
 
@@ -1775,11 +1771,10 @@ void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Forward FFmpeg FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
-      printf("FFT:\n");
-      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "y", "y");
-      for (n = 0; n < fft_size; ++n) {
-        printf("%4d\t%16g\t%16g\n", n, y[n].Re, y[n].Im);
-      }
+      printf("FFT Actual:\n");
+      DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
+      printf("FFT Expected:\n");
+      DumpArrayComplexFloat("true", fft_size, (OMX_FC32*) y_true);
     }
   }
 
@@ -1817,11 +1812,10 @@ void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Inverse FFmpeg FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
-      printf("IFFT:\n");
-      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "z", "z");
-      for (n = 0; n < fft_size; ++n) {
-        printf("%4d\t%16g\t%16g\t%16g\t%16g\n", n, z[n].Re, z[n].Im, x[n].Re, x[n].Im);
-      }
+      printf("IFFT Actual:\n");
+      DumpArrayComplexFloat("z", fft_size, z);
+      printf("IFFT Expected:\n");
+      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
     }
   }
 
@@ -1927,11 +1921,10 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
     PrintResult("Forward FFmpeg RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       OMX_FC32* fft = (OMX_FC32*) y;
-      printf("FFT:\n");
-      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "y", "y");
-      for (n = 0; n < fft_size / 2; ++n) {
-        printf("%4d\t%16g\t%16g\n", n, fft[n].Re, fft[n].Im);
-      }
+      printf("FFT Actual (FFMPEG packed format):\n");
+      DumpArrayComplexFloat("y", fft_size / 2, fft);
+      printf("FFT Expected:\n");
+      DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
     }
   }
 
@@ -1982,11 +1975,10 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Inverse FFmpeg RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
-      printf("IFFT:\n");
-      printf("%4s\t%10s\n", "n", "z");
-      for (n = 0; n < fft_size; ++n) {
-        printf("%4d\t%16g\t%16g\n", n, z[n], x[n]);
-      }
+      printf("IFFT Actual:\n");
+      DumpArrayFloat("z", fft_size, z);
+      printf("IFFT Expected:\n");
+      DumpArrayFloat("x", fft_size, x);
     }
   }
 
