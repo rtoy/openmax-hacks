@@ -1536,7 +1536,10 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
     // Ne10 FFTs destroy the input.
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      memcpy(y, y_true, fft_size * sizeof(struct ComplexFloat*));
+      memcpy(y, y_true, fft_size * sizeof(*y));
+
+      // The inverse doesn't appear to be working.  Or I'm calling it
+      // incorrectly.
       ne10_radix4_butterfly_inverse_float_neon(z,
                                                y,
                                                fft_size,
@@ -1663,6 +1666,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       memcpy(y, y_true, (fft_size >> 1) * sizeof(*y));
+      // The inverse appears not to be working.
       ne10_rfft_float_neon(&rfft_inv_spec, y, z, temp);
     }
     GetUserTime(&end_time);
