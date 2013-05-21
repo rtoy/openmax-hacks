@@ -317,25 +317,25 @@ evenOddButterflyLoop:
 
         SUB     step1,step1,#8                    @// (N/4-2)*8 bytes
         VLD1    dW0i,[pTwiddleTmp],step1
-        VLD1    dW1i,[pTwiddleTmp]!
-        SUB     pSrc,pSrc,step
-
-        SUB     pTwiddleTmp,pTwiddleTmp,step1
         VREV64  dX1r,dX1r
+        SUB     pSrc,pSrc,step
+        VLD1    dW1i,[pTwiddleTmp]!
         VREV64  dX1i,dX1i
+
         SUBS    subFFTSize,subFFTSize,#4
+        SUB     pTwiddleTmp,pTwiddleTmp,step1
 
 
 
         VSUB    dT2,dX0r,dX1r                     @// a-c
         SUB     step1,step1,#8
+        VZIP    dW1r,dW1i
+        VZIP    dW0r,dW0i
         VADD    dT0,dX0r,dX1r                     @// a+c
         VSUB    dT1,dX0i,dX1i                     @// b-d
         VADD    dT3,dX0i,dX1i                     @// b+d
         VMUL   dT0,dT0,half[0]
         VMUL   dT1,dT1,half[0]
-        VZIP    dW1r,dW1i
-        VZIP    dW0r,dW0i
 
 
         VMUL   qT0,dW1r,dT2
