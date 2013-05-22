@@ -134,6 +134,8 @@
 #define dScale  D2.F32
 #define one     S4.F32
 
+#define qX0	Q0.F32	
+#define qX1	Q1.F32
 
     @// Allocate stack memory required by the function
         M_ALLOC4        complexFFTSize, 4
@@ -264,10 +266,10 @@ FFTEnd:                                               @// Does only the scaling
 
         @// N = subFFTSize  ; dataptr = pDst
 scaleFFTData:
-        VLD1    {dX0},[pSrc]            @// pSrc contains pDst pointer
-        SUBS    subFFTSize,subFFTSize,#1
-        VMUL    dX0, dX0, dScale[0]
-        VST1    {dX0},[pSrc]!
+        VLD1    {qX0},[pSrc :128]            @// pSrc contains pDst pointer
+        SUBS    subFFTSize,subFFTSize,#2
+        VMUL    qX0, qX0, dScale[0]
+        VST1    {qX0},[pSrc :128]!
 
         BGT     scaleFFTData
 
