@@ -134,8 +134,8 @@
 #define dScale  D2.F32
 #define one     S4.F32
 
-#define qX0	Q0.F32	
-#define qX1	Q1.F32
+#define qX0	Q2.F32	
+#define qX1	Q3.F32
 
     @// Allocate stack memory required by the function
         M_ALLOC4        complexFFTSize, 4
@@ -264,15 +264,27 @@ FFTEnd:                                               @// Does only the scaling
         VDIV    one, one, fN            @ one = dScale[0] = 1 / fftSize
 
 
-        @// N = subFFTSize  ; dataptr = pDst
+        @// subFFTSize = N = complexFFTSize, which is always even.
+	@//  ; dataptr = pDst
+	CMP	subFFTSize, #2
+	BEQ	scaleFFTData1
+	BLT	End
 scaleFFTData:
-        VLD1    {qX0},[pSrc :128]            @// pSrc contains pDst pointer
-        SUBS    subFFTSize,subFFTSize,#2
+        VLD1    {qX0,qX1},[pSrc :256]            @// pSrc contains pDst pointer
+        SUB     subFFTSize,subFFTSize,#4
         VMUL    qX0, qX0, dScale[0]
-        VST1    {qX0},[pSrc :128]!
+        VMUL    qX1, qX1, dScale[0]
+	CMP	subFFTSize, #4
+        VST1    {qX0,qX1},[pSrc :256]!
 
-        BGT     scaleFFTData
-
+        BGE     scaleFFTData
+	CMP	subFFTSize, #2
+	BLT	End
+scaleFFTData1:	
+	VLD1	{qX0}, [pSrc]
+	SUB	subFFTSize, #2
+	VMUL	qX0, qX0, dScale[0]
+	VST1	{qX0}, [pSrc]!	
 End:
         @// Set return value
         MOV     result, #OMX_Sts_NoErr
