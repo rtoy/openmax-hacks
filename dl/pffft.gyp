@@ -20,8 +20,8 @@
         'pffft/pffft.c',
         'pffft/pffft.h',
       ],
-  },
-  {
+    },
+    {
       'target_name': 'test_pffft',
       'type': 'executable',
       'include_dirs': [
@@ -41,5 +41,13 @@
       'sources' : [
         'pffft/test_pffft.c',
       ],
-  }],
+    },
+    {
+      'target_name': 'All',
+      'type': 'none',
+      'dependencies': [
+        'test_pffft',
+      ],
+    },
+  ],
 }
