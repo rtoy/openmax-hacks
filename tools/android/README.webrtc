@@ -1,0 +1,53 @@
+This folder contains precompiled copies of binaries produced by a Chromium
+checkout that are needed to run Android tests.
+We couldn't compile these tools from source since they depend on Chromium's
+base source code, which is not available in WebRTC.
+
+See the Subversion log for information of which Chromium revision the current
+copy is based on.
+
+The binaries are compiled for the default architecture for each platform (ia32
+for Mac and x64 for Linux as of this writing).
+
+To update these binaries:
+
+Linux:
+1. Checkout Chromium on Linux with the Android solution added to your .gclient
+   See https://code.google.com/p/chromium/wiki/AndroidBuildInstructions for
+   more info.
+2. Run:
+   source build/android/envsetup.sh
+   gclient runhooks
+3. Compile the following GYP targets in Release mode:
+   host_forwarder
+   md5sum
+4. Copy updated versions of the binaries from out/Release dir of the Chromium
+   checkout to similar locations (depending on platform) below this directory.
+5. Create a CL and commit when approved.
+
+Mac:
+Follow the steps above, but with these customizations for the different compile
+artifacts.
+
+md5sum
+Build on Linux. Use that.
+
+md5sum_bin_host
+* Modify tools/android/md5sum.gyp:
+   Remove all targets except for md5sum_bin_host
+* build/gyp_chromium --depth=. tools/android/md5sum/md5sum.gyp
+* Navigate to tools/android/md5sum
+* make -f md5sum.Makefile
+
+host_forwarder
+These modifications will result in daemon not being terminated correctly.
+However, it works:
+* Modify tools/android/forwarder2/forwarder.gyp:
+   Remove all targets except host_forwarder
+* Modify socket.cc:
+   Remove the GetUnixDomainSocketProcessOwner implementation.
+   Replace the undefine defines with their actual value.
+* Modify daemon.cc:
+   Remove the body of bool Daemon::Kill() and make it just return true.
+* Modify trace.cc:
+   Remove usage of casting -1 to pthread_t. Remove the CHECK_NE
