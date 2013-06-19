@@ -1,0 +1,5 @@
+This folder contains APKs to simulate the output of building a test using the
+Chromium test frameworks for Android.
+
+It is only intended to be used for testing running tests on Android devices for
+WebRTC.
