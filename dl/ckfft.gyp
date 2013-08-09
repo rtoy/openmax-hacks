@@ -19,7 +19,7 @@
         'CKFFT_ARM_NEON',
       ],
       'includes': [
-        '../../../build/android/cpufeatures.gypi',
+        '../../build/android/cpufeatures.gypi',
       ],
       'sources': [
         'ckfft-1.0/inc/ckfft/ckfft.h',
