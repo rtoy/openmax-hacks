@@ -38,7 +38,7 @@
           'HAVE_KISSFFT',
         ],
         'dependencies' : [
-          '../../../kissfft.gyp:kissfft',
+          '../../../../dl/kissfft.gyp:kissfft',
         ]
       }],
       ['ne10 == 1', {
@@ -46,7 +46,7 @@
           'HAVE_NE10',
         ],
         'dependencies' : [
-          '../../../ne10.gyp:ne10',
+          '../../../../dl/ne10.gyp:ne10',
         ]
       }],
       ['ffmpeg == 1', {
@@ -54,7 +54,7 @@
           'HAVE_FFMPEG',
         ],
         'dependencies' : [
-          '../../../ffmpeg.gyp:ffmpeg',
+          '../../../../dl/ffmpeg.gyp:ffmpeg',
         ]
       }],
       ['ckfft == 1', {
@@ -62,7 +62,7 @@
           'HAVE_CKFFT',
         ],
         'dependencies' : [
-          '../../../ckfft.gyp:ckfft',
+          '../../../../dl/ckfft.gyp:ckfft',
         ],
       }],
     ],
@@ -83,62 +83,6 @@
       ],
     },
     {
-      # Test complex fixed-point 16-bit FFT
-      'target_name': 'test_fft16',
-      'type': 'executable',
-      'sources': [
-        'test_fft16.c',
-      ],
-    },
-    {
-      # Test complex fixed-point 32-bit FFT
-      'target_name': 'test_fft32',
-      'type': 'executable',
-      'sources': [
-        'test_fft32.c',
-      ],
-    },
-    {
-      # Test real 32-bit fixed-point FFT
-      'target_name': 'test_rfft32',
-      'type': 'executable',
-      'sources': [
-        'test_rfft32.c',
-      ],
-    },
-    {
-      # Test real 16-bit fixed-point FFT implemented with S32 routines.
-      'target_name': 'test_rfft16_s32',
-      'type': 'executable',
-      'sources': [
-        'test_rfft16_s32.c',
-      ],
-    },
-    {
-      # Test real 16-bit fixed-point FFT implemented with S16 routines.
-      'target_name': 'test_rfft16_s16',
-      'type': 'executable',
-      'sources': [
-        'test_rfft16_s16.c',
-      ],
-    },
-    {
-      # Test complex floating-point FFT
-      'target_name': 'test_float_fft',
-      'type': 'executable',
-      'sources': [
-        'test_float_fft.c',
-      ],
-    },
-    {
-      # Test real floating-point FFT
-      'target_name': 'test_float_rfft',
-      'type': 'executable',
-      'sources': [
-        'test_float_rfft.c',
-      ],
-    },
-    {
       # Simple timing test of FFTs
       'target_name': 'test_fft_time',
       'type': 'executable',
@@ -151,13 +95,6 @@
       'target_name': 'All',
       'type': 'none',
       'dependencies': [
-        'test_fft16',
-        'test_fft32',
-        'test_float_fft',
-        'test_float_rfft',
-        'test_rfft16_s32',
-        'test_rfft16_s16',
-        'test_rfft32',
         'test_fft_time',
       ],
     },
