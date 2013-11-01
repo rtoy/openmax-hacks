@@ -62,7 +62,7 @@
           'HAVE_CKFFT',
         ],
         'dependencies' : [
-          '../../../../../../dl/ckfft.gyp:ckfft',
+          '../../../../../other-fft/ckfft.gyp:ckfft'
         ],
       }],
     ],

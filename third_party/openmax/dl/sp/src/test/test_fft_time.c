@@ -34,7 +34,7 @@
 #endif
 
 #if defined(HAVE_CKFFT)
-#include "../../dl/ckfft-1.0/inc/ckfft/ckfft.h"
+#include "../other-fft/ckfft-1.0/inc/ckfft/ckfft.h"
 #endif
 
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
