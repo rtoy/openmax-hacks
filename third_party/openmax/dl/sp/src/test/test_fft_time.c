@@ -2549,7 +2549,7 @@ void TimePfFFT(int count, float signal_value, int signal_type) {
    */
   min_order = min_fft_order < 4 ? 4 : min_fft_order;
   
-  for (k = min_fft_order; k <= max_fft_order; ++k) {
+  for (k = min_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOnePfFFT(testCount, k, signal_value, signal_type);
   }
