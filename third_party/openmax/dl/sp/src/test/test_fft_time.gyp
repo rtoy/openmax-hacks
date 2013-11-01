@@ -38,7 +38,7 @@
           'HAVE_KISSFFT',
         ],
         'dependencies' : [
-          '../../../../../../dl/kissfft.gyp:kissfft',
+          '../../../../../other-fft/kissfft.gyp:kissfft',
         ]
       }],
       ['ne10 == 1', {

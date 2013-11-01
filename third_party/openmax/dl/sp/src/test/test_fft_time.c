@@ -22,7 +22,7 @@
 #include "dl/sp/src/test/test_util.h"
 
 #if defined(HAVE_KISSFFT)
-#include "../../dl/kiss_fft130/kiss_fft.h"
+#include "../other-fft/kiss_fft130/kiss_fft.h"
 #endif
 
 #if defined(HAVE_NE10)
