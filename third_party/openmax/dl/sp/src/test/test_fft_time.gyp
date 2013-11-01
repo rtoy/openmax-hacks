@@ -46,7 +46,7 @@
           'HAVE_NE10',
         ],
         'dependencies' : [
-          '../../../../../../dl/ne10.gyp:ne10',
+          '../../../../../other-fft/ne10.gyp:ne10',
         ]
       }],
       ['ffmpeg == 1', {

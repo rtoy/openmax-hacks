@@ -26,7 +26,7 @@
 #endif
 
 #if defined(HAVE_NE10)
-#include "../../dl/Ne10/inc/NE10_types.h"
+#include "../other-fft/Ne10/inc/NE10_types.h"
 #endif
 
 #if defined(HAVE_FFMPEG)
