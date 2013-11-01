@@ -54,7 +54,7 @@
           'HAVE_FFMPEG',
         ],
         'dependencies' : [
-          '../../../../../../dl/ffmpeg.gyp:ffmpeg',
+          '../../../../../other-fft/ffmpeg.gyp:ffmpeg',
         ]
       }],
       ['ckfft == 1', {

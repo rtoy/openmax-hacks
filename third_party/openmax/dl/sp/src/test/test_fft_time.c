@@ -30,7 +30,7 @@
 #endif
 
 #if defined(HAVE_FFMPEG)
-#include "../../dl/ffmpeg/libavcodec/avfft.h"
+#include "../other-fft/ffmpeg/libavcodec/avfft.h"
 #endif
 
 #if defined(HAVE_CKFFT)
