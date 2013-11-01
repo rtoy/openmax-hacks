@@ -2446,9 +2446,6 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
-  float* work;
-  int n_floats;
-  int work_size_bytes;
   PFFFT_Setup *s;
   
   fft_size = 1 << fft_log_size;
@@ -2459,21 +2456,22 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
 
   y_true = (struct ComplexFloat*) malloc(sizeof(*y_true) * fft_size);
 
-  n_floats = 2 * fft_size * sizeof(float);
-  work = (float*) malloc(2 * n_floats + 15 * sizeof(*work));
-  
   x = x_aligned->aligned_pointer_;
   y = y_aligned->aligned_pointer_;
   z = z_aligned->aligned_pointer_;
 
   s = pffft_new_setup(fft_size, PFFFT_COMPLEX);
+  if (!s) {
+    fprintf(stderr, "TimeOnePfFFT: Could not initialize structure for order %d\n",
+            fft_log_size);
+  }
 
   GenerateTestSignalAndFFT(x, y_true, fft_size, signal_type, signal_value, 0);
 
   if (do_forward_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      pffft_transform_ordered(s, x, y, work, PFFFT_FORWARD);
+      pffft_transform_ordered(s, (float*)x, (float*)y, NULL, PFFFT_FORWARD);
     }
     GetUserTime(&end_time);
 
@@ -2486,7 +2484,7 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
     if (verbose > 255)
       printf("Effective FFT time:  %g sec\n", elapsed_time);
 
-    PrintResult("Forward CkFFT FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Forward PFFFT FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
@@ -2502,7 +2500,7 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
     for (n = 0; n < count; ++n) {
       int m;
       
-      pffft_transform_ordered(s, y, z, work, PFFFT_BACKWARD);
+      pffft_transform_ordered(s, (float*)y, (float*)z, NULL, PFFFT_BACKWARD);
       /*
        * Need to include cost of scaling the inverse
        */
@@ -2522,7 +2520,7 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
     if (verbose > 255)
       printf("Effective FFT time:  %g sec\n", elapsed_time);
 
-    PrintResult("Inverse CkFFT FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
       DumpArrayComplexFloat("z", fft_size, z);
@@ -2534,15 +2532,22 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
   FreeAlignedPointer(x_aligned);
   FreeAlignedPointer(y_aligned);
   FreeAlignedPointer(z_aligned);
+  pffft_destroy_setup(s);
   free(y_true);
-  free(work);
 }
 
 void TimePfFFT(int count, float signal_value, int signal_type) {
   int k;
-
+  int min_order;
+  
   if (verbose == 0)
-    printf("%s CkFFT FFT\n", do_forward_test ? "Forward" : "Inverse");
+    printf("%s PFFFT FFT\n", do_forward_test ? "Forward" : "Inverse");
+
+  /*
+   * It appears that FFT orders below 4 are incorrect, so don't time
+   * orders below 4.
+   */
+  min_order = min_fft_order < 4 ? 4 : min_fft_order;
   
   for (k = min_fft_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
