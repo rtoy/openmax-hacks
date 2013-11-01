@@ -37,6 +37,10 @@
 #include "../other-fft/ckfft-1.0/inc/ckfft/ckfft.h"
 #endif
 
+#if defined(HAVE_PFFFT)
+#include "../other-fft/pffft/pffft.h"
+#endif
+
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 #define MAX_FFT_ORDER_FIXED_POINT 12
 
@@ -102,6 +106,12 @@ void TimeCkFFTRFFT(int count, float signal_value, int signal_type);
 #endif
 #endif
 
+#if defined(HAVE_PFFFT)
+void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
+                  int signal_type);
+void TimePfFFT(int count, float signal_value, int signal_type);
+#endif
+
 static int verbose = 1;
 static int include_conversion = 0;
 static int adapt_count = 1;
@@ -152,6 +162,9 @@ void TimeFFTUsage(char* prog) {
 #endif
 #if defined(HAVE_CKFFT)
       "	             11 - Cricket FFT complex float\n"
+#endif
+#if defined(HAVE_PFFFT)
+      "	             12 - PFFFT complex float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -280,6 +293,10 @@ void main(int argc, char* argv[]) {
     if ((fft_type == -1) || (fft_type == 11))
       TimeCkFFTFFT(count, signal_value, signal_type);
 #endif
+#if defined(HAVE_PFFFT)
+    if ((fft_type == -1) || (fft_type == 12))
+      TimePfFFT(count, signal_value, signal_type);
+#endif
   } else {
     switch (fft_type) {
       case 0:
@@ -325,6 +342,11 @@ void main(int argc, char* argv[]) {
 #if defined(HAVE_CKFFT)
       case 11:
         TimeOneCkFFTFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+#endif
+#if defined(HAVE_PFFFT)
+      case 12:
+        TimeOnePfFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
       default:
@@ -2404,4 +2426,127 @@ void TimeCkFFTRFFT(int count, float signal_value, int signal_type) {
   }
 }
 #endif
+#endif
+
+#if defined(HAVE_PFFFT)
+void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
+                     int signal_type) {
+  struct AlignedPtr* x_aligned;
+  struct AlignedPtr* y_aligned;
+  struct AlignedPtr* z_aligned;
+
+  struct ComplexFloat* x;
+  struct ComplexFloat* y;
+  OMX_FC32* z;
+
+  struct ComplexFloat* y_true;
+
+  int n;
+  int fft_size;
+  struct timeval start_time;
+  struct timeval end_time;
+  double elapsed_time;
+  float* work;
+  int n_floats;
+  int work_size_bytes;
+  PFFFT_Setup *s;
+  
+  fft_size = 1 << fft_log_size;
+
+  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
+  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
+  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
+
+  y_true = (struct ComplexFloat*) malloc(sizeof(*y_true) * fft_size);
+
+  n_floats = 2 * fft_size * sizeof(float);
+  work = (float*) malloc(2 * n_floats + 15 * sizeof(*work));
+  
+  x = x_aligned->aligned_pointer_;
+  y = y_aligned->aligned_pointer_;
+  z = z_aligned->aligned_pointer_;
+
+  s = pffft_new_setup(fft_size, PFFFT_COMPLEX);
+
+  GenerateTestSignalAndFFT(x, y_true, fft_size, signal_type, signal_value, 0);
+
+  if (do_forward_test) {
+    GetUserTime(&start_time);
+    for (n = 0; n < count; ++n) {
+      pffft_transform_ordered(s, x, y, work, PFFFT_FORWARD);
+    }
+    GetUserTime(&end_time);
+
+    elapsed_time = TimeDifference(&start_time, &end_time);
+
+    if (verbose > 255) {
+      printf("FFT time          :  %g sec\n", elapsed_time);
+    }
+
+    if (verbose > 255)
+      printf("Effective FFT time:  %g sec\n", elapsed_time);
+
+    PrintResult("Forward CkFFT FFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      printf("FFT Actual:\n");
+      DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
+      printf("FFT Expected:\n");
+      DumpArrayComplexFloat("true", fft_size, (OMX_FC32*) y_true);
+    }
+  }
+
+  if (do_inverse_test) {
+    float scale = 1.0 / fft_size;
+
+    GetUserTime(&start_time);
+    for (n = 0; n < count; ++n) {
+      int m;
+      
+      pffft_transform_ordered(s, y, z, work, PFFFT_BACKWARD);
+      /*
+       * Need to include cost of scaling the inverse
+       */
+      for (m = 0; m < fft_size; ++m) {
+        z[m].Re *= scale;
+        z[m].Im *= scale;
+      }
+    }
+    GetUserTime(&end_time);
+
+    elapsed_time = TimeDifference(&start_time, &end_time);
+
+    if (verbose > 255) {
+      printf("FFT time          :  %g sec\n", elapsed_time);
+    }
+
+    if (verbose > 255)
+      printf("Effective FFT time:  %g sec\n", elapsed_time);
+
+    PrintResult("Inverse CkFFT FFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      printf("IFFT Actual:\n");
+      DumpArrayComplexFloat("z", fft_size, z);
+      printf("IFFT Expected:\n");
+      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
+    }
+  }
+
+  FreeAlignedPointer(x_aligned);
+  FreeAlignedPointer(y_aligned);
+  FreeAlignedPointer(z_aligned);
+  free(y_true);
+  free(work);
+}
+
+void TimePfFFT(int count, float signal_value, int signal_type) {
+  int k;
+
+  if (verbose == 0)
+    printf("%s CkFFT FFT\n", do_forward_test ? "Forward" : "Inverse");
+  
+  for (k = min_fft_order; k <= max_fft_order; ++k) {
+    int testCount = ComputeCount(count, k);
+    TimeOnePfFFT(testCount, k, signal_value, signal_type);
+  }
+}
 #endif

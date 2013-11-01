@@ -18,6 +18,8 @@
     'ffmpeg%' : 0,
     # Include CKFFT. Default is no.
     'ckfft%' : 0,
+    # Include PFFFT. Default is no.
+    'pffft%' : 0,
   },
   'target_defaults': {
     'include_dirs': [
@@ -63,6 +65,14 @@
         ],
         'dependencies' : [
           '../../../../../other-fft/ckfft.gyp:ckfft'
+        ],
+      }],
+      ['pffft == 1', {
+        'defines': [
+          'HAVE_PFFFT',
+        ],
+        'dependencies' : [
+          '../../../../../other-fft/pffft.gyp:pffft'
         ],
       }],
     ],
