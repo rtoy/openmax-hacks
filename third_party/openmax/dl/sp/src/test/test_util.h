@@ -12,6 +12,8 @@
 #define WEBRTC_ARM_FFT_TEST_UTIL_H_
 
 #include <stdio.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 
 #include "dl/sp/src/test/compare.h"
 
@@ -166,4 +168,7 @@ void DumpArrayComplex32(const char* array_name, int count,
 void DumpArrayFloat(const char* array_name, int count, const OMX_F32* array);
 void DumpArrayComplexFloat(const char* array_name, int count,
                            const OMX_FC32* array);
+void GetUserTime(struct timeval* time);
+double TimeDifference(const struct timeval * start,
+                      const struct timeval * end);
 #endif

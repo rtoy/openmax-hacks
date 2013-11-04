@@ -11,8 +11,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/resource.h>
-#include <sys/time.h>
 #include <unistd.h>
 
 #include "dl/sp/api/armSP.h"
@@ -312,22 +310,6 @@ void main(int argc, char* argv[]) {
         break;
     }
   }
-}
-
-void GetUserTime(struct timeval* time) {
-  struct rusage usage;
-  getrusage(RUSAGE_SELF, &usage);
-  memcpy(time, &usage.ru_utime, sizeof(*time));
-}
-
-double TimeDifference(const struct timeval * start,
-                      const struct timeval * end) {
-  double start_time;
-  double end_time;
-  start_time = start->tv_sec + start->tv_usec * 1e-6;
-  end_time = end->tv_sec + end->tv_usec * 1e-6;
-
-  return end_time - start_time;
 }
 
 void PrintResult(const char* prefix, int fft_log_size, double elapsed_time,
