@@ -157,7 +157,7 @@ void TimeCkFFTFFT(int count, float signal_value, int signal_type) {
   }
 }
 
-#if 0
+#if 1
 void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
                       int signal_type) {
   OMX_F32* x;                   /* Source */
@@ -165,6 +165,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
   OMX_F32* z;                   /* Inverse transform */
 
   OMX_F32* y_true;              /* True FFT */
+  OMX_F32* tmp;
 
   struct AlignedPtr* x_aligned;
   struct AlignedPtr* y_aligned;
@@ -172,8 +173,8 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
 
 
   int n;
-  RDFTContext* fft_fwd_spec;
-  RDFTContext* fft_inv_spec;
+  CkFftContext* fft_fwd_spec = NULL;;
+  CkFftContext* fft_inv_spec = NULL;
   int fft_size;
   struct timeval start_time;
   struct timeval end_time;
@@ -192,12 +193,13 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
   z = z_aligned->aligned_pointer_;
 
   y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
+  tmp = (OMX_F32*) malloc(sizeof(*tmp) * (fft_size + 2));
 
   GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
                           signal_value);
 
-  fft_fwd_spec = av_rdft_init(fft_log_size, DFT_R2C);
-  fft_inv_spec = av_rdft_init(fft_log_size, IDFT_C2R);
+  fft_fwd_spec = CkFftInit(fft_size, kCkFftDirection_Forward, NULL, NULL);
+  fft_inv_spec = CkFftInit(fft_size, kCkFftDirection_Inverse, NULL, NULL);
 
   if (!fft_fwd_spec || !fft_inv_spec) {
     fprintf(stderr, "TimeOneCkFFTRFFT:  Could not initialize structures for order %d\n",
@@ -206,22 +208,9 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
   }
 
   if (do_forward_test) {
-    /*
-     * Measure how much time we spend doing copies, so we can subtract
-     * them from the elapsed time for the FFTs.
-     */
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      memcpy(y, x, sizeof(*y) * fft_size);
-    }
-    GetUserTime(&end_time);
-    copy_time = TimeDifference(&start_time, &end_time);
-
-    
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(y, x, sizeof(*y) * fft_size);
-      av_rdft_calc(fft_fwd_spec, (FFTSample*) y);
+      CkFftRealForward(fft_fwd_spec, fft_size, x, (CkFftComplex*)y);
     }
     GetUserTime(&end_time);
 
@@ -229,13 +218,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
 
     if (verbose > 255) {
       printf("FFT time          :  %g sec\n", elapsed_time);
-      printf("Time for copying  :  %g sec\n", copy_time);
     }
-
-    elapsed_time -= copy_time;
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
 
     PrintResult("Forward CkFFT RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
@@ -249,30 +232,15 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
 
   if (do_inverse_test) {
     float scale = 2.0 / fft_size;
-    FFTSample* true = (FFTSample*) malloc(sizeof(*true) * (fft_size + 2));
-
-    /* Copy y_true to true, but arrange the values according to what rdft wants. */
-
-    memcpy(true, y_true, sizeof(FFTSample*) * fft_size);
-    true[1] = y_true[fft_size / 2];
-
-    /*
-     * Measure how much time we spend doing copies, so we can subtract
-     * them from the elapsed time for the FFTs.
-     */
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(z, true, sizeof(*z) * fft_size);
-    }
-    GetUserTime(&end_time);
-    copy_time = TimeDifference(&start_time, &end_time);
 
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       int m;
       
-      memcpy(z, true, sizeof(*z) * fft_size);
-      av_rdft_calc(fft_inv_spec, (FFTSample*) z);
+      CkFftRealInverse(fft_inv_spec, fft_size, (CkFftComplex*)y, z, (CkFftComplex*) tmp);
+
+      // CkFftComplexInverse doesn't scale the inverse by 1/N, so we
+      // need to do it since the other FFTs do.
 
       for (m = 0; m < fft_size; ++m) {
         z[m] *= scale;
@@ -284,13 +252,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
 
     if (verbose > 255) {
       printf("IFFT time          :  %g sec\n", elapsed_time);
-      printf("Time for copying   :  %g sec\n", copy_time);
     }
-
-    elapsed_time -= copy_time;
-
-    if (verbose > 255)
-      printf("Effective IFFT time:  %g sec\n", elapsed_time);
 
     PrintResult("Inverse CkFFT RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
@@ -304,6 +266,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
   FreeAlignedPointer(x_aligned);
   FreeAlignedPointer(y_aligned);
   FreeAlignedPointer(z_aligned);
+  free(tmp);
   free(fft_fwd_spec);
   free(fft_inv_spec);
 }
