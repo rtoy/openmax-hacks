@@ -32,4 +32,9 @@ void GenerateTestSignalAndFFT(struct ComplexFloat* x,
                               float signal_value,
                               int real_only);
 
+void GenerateRealFloatSignal(float* x,
+                             struct ComplexFloat* fft,
+                             int size,
+                             int signal_type,
+                             float signal_value);
 #endif

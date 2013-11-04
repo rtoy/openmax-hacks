@@ -158,3 +158,31 @@ void GenerateTestSignalAndFFT(struct ComplexFloat* x,
       exit(1);
   }
 }
+
+void GenerateRealFloatSignal(float* x, struct ComplexFloat* fft, int size,
+                             int signal_type, float signal_value) {
+  int k;
+  struct ComplexFloat *test_signal;
+  struct ComplexFloat *true_fft;
+
+  test_signal = (struct ComplexFloat*) malloc(sizeof(*test_signal) * size);
+  true_fft = (struct ComplexFloat*) malloc(sizeof(*true_fft) * size);
+  GenerateTestSignalAndFFT(test_signal, true_fft, size, signal_type,
+                           signal_value, 1);
+
+  /*
+   * Convert the complex result to what we want
+   */
+
+  for (k = 0; k < size; ++k) {
+    x[k] = test_signal[k].Re;
+  }
+
+  for (k = 0; k < size / 2 + 1; ++k) {
+    fft[k].Re = true_fft[k].Re;
+    fft[k].Im = true_fft[k].Im;
+  }
+
+  free(test_signal);
+  free(true_fft);
+}

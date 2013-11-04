@@ -184,7 +184,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
   y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
 
-  GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
+  GenerateRealFloatSignal(x, (struct ComplexFloat*) y_true, fft_size, signal_type,
                           signal_value);
 
   status = ne10_rfft_init_float(&rfft_fwd_spec, &fft_fwd_spec, fft_size, 0);

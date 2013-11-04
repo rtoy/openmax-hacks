@@ -213,7 +213,8 @@ void main(int argc, char* argv[]) {
   if (test_mode && fft_type_given)
     printf("Warning:  -f ignored when -T not specified\n");
 
-  if (test_mode || full_test_mode) {
+  fprintf(stderr, "test_mode = %d\n", test_mode);
+  if (test_mode) {
     if ((fft_type == -1) || (fft_type == 0))
       TimeFloatFFT(count, signal_value, signal_type);
     if ((fft_type == -1) || (fft_type == 1))
@@ -253,7 +254,7 @@ void main(int argc, char* argv[]) {
       TimePfFFT(count, signal_value, signal_type);
 #endif
   } else {
-    if (full_test_mode) {
+    if (!full_test_mode) {
       min_fft_order = fft_log_size;
       max_fft_order = fft_log_size;
     }
@@ -440,35 +441,6 @@ void TimeFloatFFT(int count, float signal_value, int signal_type) {
   }
 }
 
-void GenerateRealFloatSignal(OMX_F32* x, OMX_FC32* fft, int size,
-                             int signal_type, float signal_value)
-{
-  int k;
-  struct ComplexFloat *test_signal;
-  struct ComplexFloat *true_fft;
-
-  test_signal = (struct ComplexFloat*) malloc(sizeof(*test_signal) * size);
-  true_fft = (struct ComplexFloat*) malloc(sizeof(*true_fft) * size);
-  GenerateTestSignalAndFFT(test_signal, true_fft, size, signal_type,
-                           signal_value, 1);
-
-  /*
-   * Convert the complex result to what we want
-   */
-
-  for (k = 0; k < size; ++k) {
-    x[k] = test_signal[k].Re;
-  }
-
-  for (k = 0; k < size / 2 + 1; ++k) {
-    fft[k].Re = true_fft[k].Re;
-    fft[k].Im = true_fft[k].Im;
-  }
-
-  free(test_signal);
-  free(true_fft);
-}
-
 void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
                       int signal_type) {
   OMX_F32* x;                   /* Source */
@@ -504,7 +476,7 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
 
   y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
 
-  GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
+  GenerateRealFloatSignal(x, (struct ComplexFloat*) y_true, fft_size, signal_type,
                           signal_value);
 
   status = omxSP_FFTGetBufSize_R_F32(fft_log_size, &fft_spec_buffer_size);
@@ -1013,7 +985,7 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
   /*
    * Generate a real version so we can measure scaling costs
    */
-  GenerateRealFloatSignal(xr, (OMX_FC32*) yrTrue, fft_size, signal_type,
+  GenerateRealFloatSignal(xr, (struct ComplexFloat*) yrTrue, fft_size, signal_type,
                           signal_value);
 
   if(s16s32 == S32) {

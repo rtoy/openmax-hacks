@@ -194,7 +194,7 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
 
   y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
 
-  GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
+  GenerateRealFloatSignal(x, (struct ComplexFloat*) y_true, fft_size, signal_type,
                           signal_value);
 
   fft_fwd_spec = av_rdft_init(fft_log_size, DFT_R2C);
