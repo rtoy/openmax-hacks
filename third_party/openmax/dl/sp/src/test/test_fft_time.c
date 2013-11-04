@@ -21,6 +21,7 @@
 
 #include "fft_time_kissfft.h"
 #include "fft_time_ne10.h"
+#include "fft_time_ffmpeg.h"
 #include "fft_time_ckfft.h"
 #include "fft_time_pffft.h"
 
@@ -108,6 +109,7 @@ void TimeFFTUsage(char* prog) {
 #endif
 #if defined(HAVE_PFFFT)
       "	             13 - PFFFT complex float\n"
+      "	             14 - PFFFT real float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -242,6 +244,7 @@ void main(int argc, char* argv[]) {
 #endif
 #if defined(HAVE_PFFFT)
     TimePfFFT(count, signal_value, signal_type);
+    TimePfRFFT(count, signal_value, signal_type);
 #endif
   } else {
     if (!full_test_mode) {
@@ -302,6 +305,9 @@ void main(int argc, char* argv[]) {
 #if defined(HAVE_PFFFT)
       case 13:
         TimePfFFT(count, signal_value, signal_type);
+        break;
+      case 14:
+        TimePfRFFT(count, signal_value, signal_type);
         break;
 #endif
       default:
@@ -487,6 +493,13 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
     elapsed_time = TimeDifference(&start_time, &end_time);
 
     PrintResult("Forward Float RFFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      OMX_FC32* fft = (OMX_FC32*) y;
+      printf("FFT Actual:\n");
+      DumpArrayComplexFloat("y", fft_size / 2, fft);
+      printf("FFT Expected:\n");
+      DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
+    }
   }
 
   if (do_inverse_test) {
