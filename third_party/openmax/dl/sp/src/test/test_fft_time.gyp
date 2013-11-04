@@ -110,6 +110,11 @@
             'fft_time_ne10.c',
           ],
         }],
+        ['ffmpeg == 1', {
+          'sources' : [
+            'fft_time_ffmpeg.c',
+          ],
+        }],
       ],
     },
     {

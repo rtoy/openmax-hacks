@@ -25,10 +25,6 @@
 #include "../other-fft/Ne10/inc/NE10_types.h"
 #endif
 
-#if defined(HAVE_FFMPEG)
-#include "../other-fft/ffmpeg/libavcodec/avfft.h"
-#endif
-
 #if defined(HAVE_CKFFT)
 #include "../other-fft/ckfft-1.0/inc/ckfft/ckfft.h"
 #endif
@@ -1470,7 +1466,7 @@ void TimeRFFT32(int count, float signal_value, int signal_type) {
   }
 }
 
-#if defined(HAVE_FFMPEG)
+#if 0 && defined(HAVE_FFMPEG)
 void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
                      int signal_type) {
   struct AlignedPtr* x_aligned;
