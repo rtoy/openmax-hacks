@@ -21,6 +21,11 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 
+#include "fft_time_kissfft.h"
+#include "fft_time_ne10.h"
+#include "fft_time_ckfft.h"
+#include "fft_time_pffft.h"
+
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 #define MAX_FFT_ORDER_FIXED_POINT 12
 
@@ -50,47 +55,6 @@ void TimeSC16FFT(int count, float signal_value, int signal_type);
 void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
                    int signal_type);
 void TimeRFFT32(int count, float signal_value, int signal_type);
-
-#if defined(HAVE_KISSFFT)
-void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
-		    int signal_type);
-void TimeKissFFT(int count, float signal_value, int signal_type);
-#endif
-
-#if defined(HAVE_NE10)
-void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
-		    int signal_type);
-void TimeNE10FFT(int count, float signal_value, int signal_type);
-void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
-		    int signal_type);
-void TimeNE10RFFT(int count, float signal_value, int signal_type);
-#endif
-
-#if defined(HAVE_FFMPEG)
-void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
-		      int signal_type);
-void TimeFFmpegFFT(int count, float signal_value, int signal_type);
-void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
-                       int signal_type);
-void TimeFFmpegRFFT(int count, float signal_value, int signal_type);
-#endif
-
-#if defined(HAVE_CKFFT)
-void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
-		      int signal_type);
-void TimeCkFFTFFT(int count, float signal_value, int signal_type);
-#if 0
-void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
-                       int signal_type);
-void TimeCkFFTRFFT(int count, float signal_value, int signal_type);
-#endif
-#endif
-
-#if defined(HAVE_PFFFT)
-void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
-                  int signal_type);
-void TimePfFFT(int count, float signal_value, int signal_type);
-#endif
 
 int verbose = 1;
 int include_conversion = 0;

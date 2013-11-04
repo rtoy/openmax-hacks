@@ -103,26 +103,31 @@
         ['kissfft == 1', {
           'sources' : [
             'fft_time_kissfft.c',
+            'fft_time_kissfft.h',
           ],
         }],
         ['ne10 == 1', {
           'sources' : [
             'fft_time_ne10.c',
+            'fft_time_ne10.h',
           ],
         }],
         ['ffmpeg == 1', {
           'sources' : [
             'fft_time_ffmpeg.c',
+            'fft_time_ffmpeg.h',
           ],
         }],
         ['ckfft == 1', {
           'sources' : [
             'fft_time_ckfft.c',
+            'fft_time_ckfft.h',
           ],
         }],
         ['pffft == 1', {
           'sources' : [
             'fft_time_pffft.c',
+            'fft_time_pffft.h',
           ],
         }],
       ],
