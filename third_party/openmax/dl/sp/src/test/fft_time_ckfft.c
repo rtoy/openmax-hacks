@@ -223,7 +223,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
     PrintResult("Forward CkFFT RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       OMX_FC32* fft = (OMX_FC32*) y;
-      printf("FFT Actual (FFMPEG packed format):\n");
+      printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size / 2, fft);
       printf("FFT Expected:\n");
       DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
