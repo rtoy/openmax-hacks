@@ -174,6 +174,8 @@ void TimeFFTUsage(char* prog) {
       "              1 - Real ramp starting at S/N, N = FFT size\n"
       "              2 - Sine wave of amplitude S\n"
       "              3 - Complex signal whose transform is a sine wave.\n"
+      "  -O          Only run the float FFTs"
+      "  -t          Run full set of timing tests for the specified FFT"
       "\n"
       "Use -v 0 in combination with -F or -I to get output that can\n"
       "be pasted into a spreadsheet.\n"
@@ -193,10 +195,12 @@ void main(int argc, char* argv[]) {
   int count = 100;
   int fft_type = -1;
   int fft_type_given = 0;
+  int float_only = 0;
+  int full_test_mode = 0;
 
   int opt;
 
-  while ((opt = getopt(argc, argv, "hTFICAc:n:s:S:g:v:f:m:M:")) != -1) {
+  while ((opt = getopt(argc, argv, "hTFICAc:n:s:S:g:v:f:m:M:Ot")) != -1) {
     switch (opt) {
       case 'h':
         TimeFFTUsage(argv[0]);
@@ -251,6 +255,12 @@ void main(int argc, char* argv[]) {
           max_fft_order = MAX_FFT_ORDER;
         }
         break;
+      case 'O':
+        float_only = 1;
+        break;
+      case 't':
+        full_test_mode = 1;
+        break;
       default:
         TimeFFTUsage(argv[0]);
         break;
@@ -260,18 +270,18 @@ void main(int argc, char* argv[]) {
   if (test_mode && fft_type_given)
     printf("Warning:  -f ignored when -T not specified\n");
 
-  if (test_mode) {
+  if (test_mode || full_test_mode) {
     if ((fft_type == -1) || (fft_type == 0))
       TimeFloatFFT(count, signal_value, signal_type);
     if ((fft_type == -1) || (fft_type == 1))
       TimeFloatRFFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 2))
+    if (!float_only_mode && ((fft_type == -1) || (fft_type == 2)))
       TimeSC16FFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 3))
+    if (!float_only_mode && ((fft_type == -1) || (fft_type == 3)))
       TimeRFFT16(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 4))
+    if (!float_only_mode && ((fft_type == -1) || (fft_type == 4)))
       TimeSC32FFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 5))
+    if (!float_onlymode && ((fft_type == -1) || (fft_type == 5)))
       TimeRFFT32(count, signal_value, signal_type);
 #if defined(HAVE_KISSFFT)
     if ((fft_type == -1) || (fft_type == 6))
@@ -298,55 +308,60 @@ void main(int argc, char* argv[]) {
       TimePfFFT(count, signal_value, signal_type);
 #endif
   } else {
+    if (full_test_mode) {
+      min_fft_order = fft_log_size;
+      max_fft_order = fft_log_size;
+    }
+
     switch (fft_type) {
       case 0:
-        TimeOneFloatFFT(count, fft_log_size, signal_value, signal_type);
+        TimeFloatFFT(count, signal_value, signal_type);
         break;
       case 1:
-        TimeOneFloatRFFT(count, fft_log_size, signal_value, signal_type);
+        TimeFloatRFFT(count, signal_value, signal_type);
         break;
       case 2:
-        TimeOneSC16FFT(count, fft_log_size, signal_value, signal_type);
+        TimeSC16FFT(count, signal_value, signal_type);
         break;
       case 3:
-        TimeOneRFFT16(count, fft_log_size, signal_value, signal_type, S32);
-        TimeOneRFFT16(count, fft_log_size, signal_value, signal_type, S16);
+        TimeRFFT16(count, signal_value, signal_type, S32);
+        TimeRFFT16(count, signal_value, signal_type, S16);
         break;
       case 4:
-        TimeOneSC32FFT(count, fft_log_size, signal_value, signal_type);
+        TimeSC32FFT(count, signal_value, signal_type);
         break;
       case 5:
-        TimeOneRFFT32(count, fft_log_size, signal_value, signal_type);
+        TimeRFFT32(count, signal_value, signal_type);
         break;
 #if defined(HAVE_KISSFFT)
       case 6:
-        TimeOneKissFFT(count, fft_log_size, signal_value, signal_type);
+        TimeKissFFT(count, signal_value, signal_type);
         break;
 #endif
 #if defined(HAVE_NE10)
       case 7:
-        TimeOneNE10FFT(count, fft_log_size, signal_value, signal_type);
+        TimeNE10FFT(count, signal_value, signal_type);
         break;
       case 8:
-        TimeOneNE10RFFT(count, fft_log_size, signal_value, signal_type);
+        TimeNE10RFFT(count, signal_value, signal_type);
         break;
 #endif
 #if defined(HAVE_FFMPEG)
       case 9:
-        TimeOneFFmpegFFT(count, fft_log_size, signal_value, signal_type);
+        TimeFFmpegFFT(count, signal_value, signal_type);
         break;
       case 10:
-        TimeOneFFmpegRFFT(count, fft_log_size, signal_value, signal_type);
+        TimeFFmpegRFFT(count, signal_value, signal_type);
         break;
 #endif
 #if defined(HAVE_CKFFT)
       case 11:
-        TimeOneCkFFTFFT(count, fft_log_size, signal_value, signal_type);
+        TimeCkFFTFFT(count, signal_value, signal_type);
         break;
 #endif
 #if defined(HAVE_PFFFT)
       case 12:
-        TimeOnePfFFT(count, fft_log_size, signal_value, signal_type);
+        TimePfFFT(count, signal_value, signal_type);
         break;
 #endif
       default:
