@@ -86,6 +86,7 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
   if (do_inverse_test) {
     float scale = 1.0 / fft_size;
 
+    memcpy(y, y_true, sizeof(*y) * (fft_size + 2));
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       int m;
@@ -144,4 +145,138 @@ void TimePfFFT(int count, float signal_value, int signal_type) {
     TimeOnePfFFT(testCount, k, signal_value, signal_type);
   }
 }
+
+void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
+                     int signal_type) {
+  struct AlignedPtr* x_aligned;
+  struct AlignedPtr* y_aligned;
+  struct AlignedPtr* z_aligned;
+
+  float* x;
+  struct ComplexFloat* y;
+  OMX_FC32* z;
+
+  float* y_true;
+  float* true;
+
+  int n;
+  int fft_size;
+  struct timeval start_time;
+  struct timeval end_time;
+  double elapsed_time;
+  PFFFT_Setup *s;
+  
+  fft_size = 1 << fft_log_size;
+
+  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
+  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
+  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
+
+  y_true = (float*) malloc(sizeof(*y_true) * fft_size);
+  true = (float*) malloc(sizeof(*true) * (fft_size + 2));
+
+  x = x_aligned->aligned_pointer_;
+  y = y_aligned->aligned_pointer_;
+  z = z_aligned->aligned_pointer_;
+
+  s = pffft_new_setup(fft_size, PFFFT_REAL);
+  if (!s) {
+    fprintf(stderr, "TimeOnePfFFT: Could not initialize structure for order %d\n",
+            fft_log_size);
+  }
+
+  GenerateRealFloatSignal(x, (struct ComplexFloat*) y_true, fft_size, signal_type, signal_value);
+
+  if (do_forward_test) {
+    GetUserTime(&start_time);
+    for (n = 0; n < count; ++n) {
+      pffft_transform_ordered(s, (float*)x, (float*)y, NULL, PFFFT_FORWARD);
+    }
+    GetUserTime(&end_time);
+
+    elapsed_time = TimeDifference(&start_time, &end_time);
+
+    if (verbose > 255) {
+      printf("FFT time          :  %g sec\n", elapsed_time);
+    }
+
+    if (verbose > 255)
+      printf("Effective FFT time:  %g sec\n", elapsed_time);
+
+    PrintResult("Forward PFFFT FFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      printf("FFT Actual:\n");
+      DumpArrayComplexFloat("y", fft_size / 2, (OMX_FC32*) y);
+      printf("FFT Expected:\n");
+      DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
+    }
+  }
+
+  if (do_inverse_test) {
+    float scale = 1.0 / fft_size;
+
+    /* Copy y_true to true, but arrange the values according to what rdft wants. */
+
+    memcpy(true, y_true, sizeof(float*) * fft_size);
+    true[1] = y_true[fft_size / 2];
+
+    GetUserTime(&start_time);
+    for (n = 0; n < count; ++n) {
+      int m;
+      
+      pffft_transform_ordered(s, (float*)y, (float*)z, NULL, PFFFT_BACKWARD);
+      /*
+       * Need to include cost of scaling the inverse
+       */
+      for (m = 0; m < fft_size; ++m) {
+        z[m].Re *= scale;
+        z[m].Im *= scale;
+      }
+    }
+    GetUserTime(&end_time);
+
+    elapsed_time = TimeDifference(&start_time, &end_time);
+
+    if (verbose > 255) {
+      printf("FFT time          :  %g sec\n", elapsed_time);
+    }
+
+    if (verbose > 255)
+      printf("Effective FFT time:  %g sec\n", elapsed_time);
+
+    PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count);
+    if (verbose >= 255) {
+      printf("IFFT Actual:\n");
+      DumpArrayComplexFloat("z", fft_size, z);
+      printf("IFFT Expected:\n");
+      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
+    }
+  }
+
+  FreeAlignedPointer(x_aligned);
+  FreeAlignedPointer(y_aligned);
+  FreeAlignedPointer(z_aligned);
+  pffft_destroy_setup(s);
+  free(y_true);
+}
+
+void TimePfRFFT(int count, float signal_value, int signal_type) {
+  int k;
+  int min_order;
+  
+  if (verbose == 0)
+    printf("%s PFFFT FFT\n", do_forward_test ? "Forward" : "Inverse");
+
+  /*
+   * It appears that FFT orders below 4 are incorrect, so don't time
+   * orders below 4.
+   */
+  min_order = min_fft_order < 4 ? 4 : min_fft_order;
+  
+  for (k = min_order; k <= max_fft_order; ++k) {
+    int testCount = ComputeCount(count, k);
+    TimeOnePfRFFT(testCount, k, signal_value, signal_type);
+  }
+}
+
 #endif
