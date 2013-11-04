@@ -215,43 +215,29 @@ void main(int argc, char* argv[]) {
 
   fprintf(stderr, "test_mode = %d\n", test_mode);
   if (test_mode) {
-    if ((fft_type == -1) || (fft_type == 0))
-      TimeFloatFFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 1))
-      TimeFloatRFFT(count, signal_value, signal_type);
-    if (!float_only_mode && ((fft_type == -1) || (fft_type == 2)))
-      TimeSC16FFT(count, signal_value, signal_type);
-    if (!float_only_mode && ((fft_type == -1) || (fft_type == 3)))
-      TimeRFFT16(count, signal_value, signal_type);
-    if (!float_only_mode && ((fft_type == -1) || (fft_type == 4)))
-      TimeSC32FFT(count, signal_value, signal_type);
-    if (!float_only_mode && ((fft_type == -1) || (fft_type == 5)))
-      TimeRFFT32(count, signal_value, signal_type);
+    TimeFloatFFT(count, signal_value, signal_type);
+    TimeFloatRFFT(count, signal_value, signal_type);
+    TimeSC16FFT(count, signal_value, signal_type);
+    TimeRFFT16(count, signal_value, signal_type);
+    TimeSC32FFT(count, signal_value, signal_type);
+    TimeRFFT32(count, signal_value, signal_type);
 #if defined(HAVE_KISSFFT)
-    if ((fft_type == -1) || (fft_type == 6))
-      TimeKissFFT(count, signal_value, signal_type);
+    TimeKissFFT(count, signal_value, signal_type);
 #endif
 #if defined(HAVE_NE10)
-    if ((fft_type == -1) || (fft_type == 7))
-      TimeNE10FFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 8))
-      TimeNE10RFFT(count, signal_value, signal_type);
+    TimeNE10FFT(count, signal_value, signal_type);
+    TimeNE10RFFT(count, signal_value, signal_type);
 #endif
 #if defined(HAVE_FFMPEG)
-    if ((fft_type == -1) || (fft_type == 9))
-      TimeFFmpegFFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 10))
-      TimeFFmpegRFFT(count, signal_value, signal_type);
+    TimeFFmpegFFT(count, signal_value, signal_type);
+    TimeFFmpegRFFT(count, signal_value, signal_type);
 #endif
 #if defined(HAVE_CKFFT)
-    if ((fft_type == -1) || (fft_type == 11))
-      TimeCkFFTFFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 12))
-      TimeCkFFTRFFT(count, signal_value, signal_type);
+    TimeCkFFTFFT(count, signal_value, signal_type);
+    TimeCkFFTRFFT(count, signal_value, signal_type);
 #endif
 #if defined(HAVE_PFFFT)
-    if ((fft_type == -1) || (fft_type == 12))
-      TimePfFFT(count, signal_value, signal_type);
+    TimePfFFT(count, signal_value, signal_type);
 #endif
   } else {
     if (!full_test_mode) {
