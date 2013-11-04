@@ -104,9 +104,10 @@ void TimeFFTUsage(char* prog) {
 #endif
 #if defined(HAVE_CKFFT)
       "	             11 - Cricket FFT complex float\n"
+      "	             12 - Cricket FFT real float\n"
 #endif
 #if defined(HAVE_PFFFT)
-      "	             12 - PFFFT complex float\n"
+      "	             13 - PFFFT complex float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -244,6 +245,8 @@ void main(int argc, char* argv[]) {
 #if defined(HAVE_CKFFT)
     if ((fft_type == -1) || (fft_type == 11))
       TimeCkFFTFFT(count, signal_value, signal_type);
+    if ((fft_type == -1) || (fft_type == 12))
+      TimeCkFFTRFFT(count, signal_value, signal_type);
 #endif
 #if defined(HAVE_PFFFT)
     if ((fft_type == -1) || (fft_type == 12))
@@ -300,8 +303,13 @@ void main(int argc, char* argv[]) {
         TimeCkFFTFFT(count, signal_value, signal_type);
         break;
 #endif
-#if defined(HAVE_PFFFT)
+#if defined(HAVE_CKFFT)
       case 12:
+        TimeCkFFTRFFT(count, signal_value, signal_type);
+        break;
+#endif
+#if defined(HAVE_PFFFT)
+      case 13:
         TimePfFFT(count, signal_value, signal_type);
         break;
 #endif
