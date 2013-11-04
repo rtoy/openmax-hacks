@@ -41,7 +41,7 @@
         ],
         'dependencies' : [
           '../../../../../other-fft/kissfft.gyp:kissfft',
-        ]
+        ],
       }],
       ['ne10 == 1', {
         'defines': [
@@ -98,6 +98,13 @@
       'type': 'executable',
       'sources': [
         'test_fft_time.c',
+      ],
+      'conditions': [
+        ['kissfft == 1', {
+          'sources' : [
+            'fft_time_kissfft.c',
+          ],
+        }],
       ],
     },
     {
