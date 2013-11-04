@@ -213,7 +213,6 @@ void main(int argc, char* argv[]) {
   if (test_mode && fft_type_given)
     printf("Warning:  -f ignored when -T not specified\n");
 
-  fprintf(stderr, "test_mode = %d\n", test_mode);
   if (test_mode) {
     TimeFloatFFT(count, signal_value, signal_type);
     TimeFloatRFFT(count, signal_value, signal_type);
