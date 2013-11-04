@@ -135,8 +135,7 @@ void TimePfFFT(int count, float signal_value, int signal_type) {
     printf("%s PFFFT FFT\n", do_forward_test ? "Forward" : "Inverse");
 
   /*
-   * It appears that FFT orders below 4 are incorrect, so don't time
-   * orders below 4.
+   * Orders less than 4 are not supported by PFFFT.
    */
   min_order = min_fft_order < 4 ? 4 : min_fft_order;
   
@@ -172,7 +171,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
   z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
 
-  y_true = (float*) malloc(sizeof(*y_true) * fft_size);
+  y_true = (float*) malloc(sizeof(*y_true) * 2 * fft_size);
   true = (float*) malloc(sizeof(*true) * (fft_size + 2));
 
   x = x_aligned->aligned_pointer_;
@@ -258,6 +257,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
   FreeAlignedPointer(z_aligned);
   pffft_destroy_setup(s);
   free(y_true);
+  free(true);
 }
 
 void TimePfRFFT(int count, float signal_value, int signal_type) {
@@ -265,13 +265,12 @@ void TimePfRFFT(int count, float signal_value, int signal_type) {
   int min_order;
   
   if (verbose == 0)
-    printf("%s PFFFT FFT\n", do_forward_test ? "Forward" : "Inverse");
+    printf("%s PFFFT RFFT\n", do_forward_test ? "Forward" : "Inverse");
 
   /*
-   * It appears that FFT orders below 4 are incorrect, so don't time
-   * orders below 4.
+   * Orders less than 8 are not supported by PFFFT.
    */
-  min_order = min_fft_order < 4 ? 4 : min_fft_order;
+  min_order = min_fft_order < 5 ? 5 : min_fft_order;
   
   for (k = min_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
