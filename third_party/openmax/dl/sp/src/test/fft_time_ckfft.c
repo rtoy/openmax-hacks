@@ -157,7 +157,6 @@ void TimeCkFFTFFT(int count, float signal_value, int signal_type) {
   }
 }
 
-#if 1
 void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
                       int signal_type) {
   OMX_F32* x;                   /* Source */
@@ -278,14 +277,9 @@ void TimeCkFFTRFFT(int count, float signal_value, int signal_type) {
   if (verbose == 0)
     printf("%s CkFFT RFFT\n", do_forward_test ? "Forward" : "Inverse");
   
-  /* The minimum FFT order for rdft is 4. */
-
-  min_order = min_fft_order < 4 ? 4 : min_fft_order;
-  
-  for (k = min_order; k <= max_fft_order; ++k) {
+  for (k = min_fft_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneCkFFTRFFT(testCount, k, signal_value, signal_type);
   }
 }
-#endif
 #endif
