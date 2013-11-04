@@ -105,6 +105,11 @@
             'fft_time_kissfft.c',
           ],
         }],
+        ['ne10 == 1', {
+          'sources' : [
+            'fft_time_ne10.c',
+          ],
+        }],
       ],
     },
     {
