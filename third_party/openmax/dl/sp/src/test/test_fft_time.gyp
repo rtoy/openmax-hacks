@@ -115,6 +115,11 @@
             'fft_time_ffmpeg.c',
           ],
         }],
+        ['ckfft == 1', {
+          'sources' : [
+            'fft_time_ckfft.c',
+          ],
+        }],
       ],
     },
     {

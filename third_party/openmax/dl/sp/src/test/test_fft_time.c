@@ -21,14 +21,6 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 
-#if defined(HAVE_NE10)
-#include "../other-fft/Ne10/inc/NE10_types.h"
-#endif
-
-#if defined(HAVE_CKFFT)
-#include "../other-fft/ckfft-1.0/inc/ckfft/ckfft.h"
-#endif
-
 #if defined(HAVE_PFFFT)
 #include "../other-fft/pffft/pffft.h"
 #endif
@@ -1466,7 +1458,7 @@ void TimeRFFT32(int count, float signal_value, int signal_type) {
   }
 }
 
-#if defined(HAVE_CKFFT)
+#if 0 && defined(HAVE_CKFFT)
 void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
                      int signal_type) {
   struct AlignedPtr* x_aligned;
