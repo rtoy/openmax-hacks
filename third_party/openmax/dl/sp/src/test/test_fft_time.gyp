@@ -120,6 +120,11 @@
             'fft_time_ckfft.c',
           ],
         }],
+        ['pffft == 1', {
+          'sources' : [
+            'fft_time_pffft.c',
+          ],
+        }],
       ],
     },
     {
