@@ -5,6 +5,7 @@
       'type': 'static_library',
       'include_dirs': [
         '../',
+        'kiss_fft130/',
       ],
       'cflags!': [
         '-mfpu=vfpv3-d16',
@@ -24,6 +25,8 @@
         'kiss_fft130/kiss_fft.h',
         'kiss_fft130/kiss_fft_bfly2_neon.S',
         'kiss_fft130/kiss_fft_bfly4_neon.S',
+        'kiss_fft130/tools/kiss_fftr.c',
+        'kiss_fft130/tools/kiss_fftr.h',
       ],
   }],
 }

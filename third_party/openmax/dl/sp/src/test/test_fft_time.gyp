@@ -42,6 +42,9 @@
         'dependencies' : [
           '../../../../../other-fft/kissfft.gyp:kissfft',
         ],
+        'include_dirs' : [
+          '../../../../../other-fft/kiss_fft130/',
+        ],
       }],
       ['ne10 == 1', {
         'defines': [
