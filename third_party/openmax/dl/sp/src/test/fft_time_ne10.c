@@ -9,6 +9,7 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 #include "../other-fft/Ne10/inc/NE10_types.h"
+#include "../other-fft/Ne10/inc/NE10_dsp.h"
 
 extern int verbose;
 extern int include_conversion;
@@ -32,8 +33,7 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
   int n;
   ne10_result_t status;
-  ne10_cfft_radix4_instance_f32_t fft_fwd_spec;
-  ne10_cfft_radix4_instance_f32_t fft_inv_spec ;
+  ne10_fft_cfg_float32_t fft_fwd_spec;
   int fft_size;
   struct timeval start_time;
   struct timeval end_time;
@@ -41,13 +41,15 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
   fft_size = 1 << fft_log_size;
 
+#if 0
   if (!((fft_size == 16) || (fft_size == 64) || (fft_size == 256) || (fft_size == 1024))) {
     fprintf(stderr, "NE10 FFT: invalid FFT size: %d\n", fft_size);
     return;
   }
+#endif
   x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
-  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
-  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
+  y_aligned = AllocAlignedPointer(32, sizeof(*y) * 2 * fft_size);
+  z_aligned = AllocAlignedPointer(32, sizeof(*z) * 2 * fft_size);
 
   y_true = (struct ComplexFloat*) malloc(sizeof(*y_true) * fft_size);
 
@@ -57,24 +59,21 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
   GenerateTestSignalAndFFT(x, y_true, fft_size, signal_type, signal_value, 0);
 
-  status = ne10_cfft_radix4_init_float(&fft_fwd_spec, fft_size, 0);
-  if (status == NE10_ERR) {
+  fft_fwd_spec = ne10_fft_alloc_c2c_float32(fft_size);
+  if (!fft_fwd_spec) {
     fprintf(stderr, "NE10 FFT: Cannot initialize FFT structure for order %d\n", fft_log_size);
     return;
   }
-  ne10_cfft_radix4_init_float(&fft_inv_spec, fft_size, 1);
   
   if (do_forward_test) {
-    // Ne10 FFTs destroy the input.
-    struct ComplexFloat *saved_x =
-        (struct ComplexFloat*) malloc(fft_size * sizeof(struct ComplexFloat*));
-    
-    memcpy(saved_x, x, fft_size * sizeof(struct ComplexFloat*));
-
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      memcpy(x, saved_x, fft_size * sizeof(struct ComplexFloat*));
-      ne10_radix4_butterfly_float_neon(y, x, fft_size, fft_fwd_spec.p_twiddle);
+      ne10_fft_c2c_1d_float32_neon((ne10_fft_cpx_float32_t *) y,
+                                   (ne10_fft_cpx_float32_t *) x,
+                                   fft_fwd_spec->twiddles,
+                                   fft_fwd_spec->factors,
+                                   fft_size,
+                                   0);
     }
     GetUserTime(&end_time);
 
@@ -82,28 +81,37 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Forward NE10 FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
+      printf("Input data:\n");
+      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
       printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
       printf("FFT Expected:\n");
       DumpArrayComplexFloat("true", fft_size, (OMX_FC32*) y_true);
     }
-
-    free(saved_x);
   }
 
   if (do_inverse_test) {
     // Ne10 FFTs destroy the input.
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      memcpy(y, y_true, fft_size * sizeof(*y));
+      //memcpy(y, y_true, fft_size * sizeof(*y));
 
       // The inverse doesn't appear to be working.  Or I'm calling it
       // incorrectly.
-      ne10_radix4_butterfly_inverse_float_neon(z,
-                                               y,
-                                               fft_size,
-                                               fft_inv_spec.p_twiddle,
-                                               fft_inv_spec.one_by_fft_len);
+      ne10_fft_c2c_1d_float32_neon((ne10_fft_cpx_float32_t *) z,
+                                   (ne10_fft_cpx_float32_t *) y,
+                                   fft_fwd_spec->twiddles,
+                                   fft_fwd_spec->factors,
+                                   fft_size,
+                                   1);
+      {
+        int k;
+        float scale = 1.0 / fft_size;
+        for (k = 0; k < fft_size; ++k) {
+          z[k].Re *= scale;
+          z[k].Im *= scale;
+        }
+      }
     }
     GetUserTime(&end_time);
 
@@ -111,6 +119,8 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Inverse NE10 FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
+      printf("Input data:\n");
+      DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y_true);
       printf("IFFT Actual:\n");
       DumpArrayComplexFloat("z", fft_size, z);
       printf("IFFT Expected:\n");
@@ -118,6 +128,7 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
     }
   }
 
+  free(fft_fwd_spec);
   FreeAlignedPointer(x_aligned);
   FreeAlignedPointer(y_aligned);
   FreeAlignedPointer(z_aligned);
@@ -131,7 +142,7 @@ void TimeNE10FFT(int count, float signal_value, int signal_type) {
     printf("%s NE10 FFT\n", do_forward_test ? "Forward" : "Inverse");
   
   // Currently, NE10 only supports sizes 16, 64, 256, and 1024 (Order 4, 6, 8, 10).
-  for (k = 4; k <= 10; k += 2) {
+  for (k = min_fft_order; k <= max_fft_order; k++) {
     int testCount = ComputeCount(count, k);
     TimeOneNE10FFT(testCount, k, signal_value, signal_type);
   }
@@ -149,15 +160,10 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   struct AlignedPtr* x_aligned;
   struct AlignedPtr* y_aligned;
   struct AlignedPtr* z_aligned;
-  struct AlignedPtr* t_aligned;
-
 
   int n;
   ne10_result_t status;
-  ne10_cfft_radix4_instance_f32_t fft_fwd_spec;
-  ne10_cfft_radix4_instance_f32_t fft_inv_spec ;
-  ne10_rfft_instance_f32_t rfft_fwd_spec;
-  ne10_rfft_instance_f32_t rfft_inv_spec;
+  ne10_fft_r2c_cfg_float32_t fft_fwd_spec;
   
   int fft_size;
   struct timeval start_time;
@@ -165,45 +171,42 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   double elapsed_time;
 
   fft_size = 1 << fft_log_size;
-
+#if 0
   if (!((fft_size == 128) || (fft_size == 512) || (fft_size == 2048))) {
     fprintf(stderr, "NE10 RFFT: invalid FFT size: %d\n", fft_size);
     return;
   }
-
-  x_aligned = AllocAlignedPointer(32, sizeof(*x) * 2 * fft_size);
+#endif
+  x_aligned = AllocAlignedPointer(32, sizeof(*x) * 4 * fft_size);
   /* The transformed value is in CCS format and is has fft_size + 2 values */
-  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (2 * fft_size + 2));
-  z_aligned = AllocAlignedPointer(32, sizeof(*z) * 2 * fft_size);
-  t_aligned = AllocAlignedPointer(32, sizeof(*temp) * (2 * fft_size + 2));
+  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (4 * fft_size + 2));
+  z_aligned = AllocAlignedPointer(32, sizeof(*z) * 4 * fft_size);
 
   x = x_aligned->aligned_pointer_;
   y = y_aligned->aligned_pointer_;
   z = z_aligned->aligned_pointer_;
-  temp = t_aligned->aligned_pointer_;
 
   y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
 
   GenerateRealFloatSignal(x, (struct ComplexFloat*) y_true, fft_size, signal_type,
                           signal_value);
 
-  status = ne10_rfft_init_float(&rfft_fwd_spec, &fft_fwd_spec, fft_size, 0);
+  fft_fwd_spec = ne10_fft_alloc_r2c_float32(fft_size);
 
-  if (status == NE10_ERR) {
+  if (!fft_fwd_spec) {
     fprintf(stderr, "NE10 RFFT: Cannot initialize FFT structure for order %d\n", fft_log_size);
     return;
   }
-  ne10_rfft_init_float(&rfft_inv_spec, &fft_inv_spec, fft_size, 1);
 
   if (do_forward_test) {
-    // Ne10 FFTs destroy the input.
-    float *saved_x = (float*) malloc(fft_size * sizeof(*saved_x));
-
-    memcpy(saved_x, x, fft_size * sizeof(*saved_x));
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      memcpy(x, saved_x, fft_size * sizeof(*saved_x));
-      ne10_rfft_float_neon(&rfft_fwd_spec, x, y, temp);
+      ne10_fft_r2c_1d_float32_neon((ne10_fft_cpx_float32_t *) y,
+                                   x,
+                                   fft_fwd_spec->twiddles,
+                                   fft_fwd_spec->super_twiddles,
+                                   fft_fwd_spec->factors,
+                                   fft_size);
     }
     GetUserTime(&end_time);
 
@@ -216,7 +219,6 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
       printf("FFT Expected:\n");
       DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
     }
-    free(saved_x);
   }
 
   if (do_inverse_test) {
@@ -224,9 +226,21 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      memcpy(y, y_true, (fft_size >> 1) * sizeof(*y));
+      //memcpy(y, y_true, (fft_size >> 1) * sizeof(*y));
       // The inverse appears not to be working.
-      ne10_rfft_float_neon(&rfft_inv_spec, y, z, temp);
+      ne10_fft_c2r_1d_float32_neon(z,
+                                   (ne10_fft_cpx_float32_t *) y,
+                                   fft_fwd_spec->twiddles,
+                                   fft_fwd_spec->super_twiddles,
+                                   fft_fwd_spec->factors,
+                                   fft_size);
+      {
+        int k;
+        float scale = 1.0 / fft_size;
+        for (k = 0; k < fft_size; ++k) {
+          z[k] *= scale;
+        }
+      }
     }
     GetUserTime(&end_time);
 
@@ -241,6 +255,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
     }
   }
 
+  free(fft_fwd_spec);
   FreeAlignedPointer(x_aligned);
   FreeAlignedPointer(y_aligned);
   FreeAlignedPointer(z_aligned);
@@ -253,7 +268,7 @@ void TimeNE10RFFT(int count, float signal_value, int signal_type) {
     printf("%s NE10 RFFT\n", do_forward_test ? "Forward" : "Inverse");
   
   // The NE10 RFFT routine currently only supports sizes 128, 512, 2048. (Order 7, 9, 11)
-  for (k = 7; k <= 11; k += 2) {
+  for (k = min_fft_order; k <= max_fft_order; k++) {
     int testCount = ComputeCount(count, k);
     TimeOneNE10RFFT(testCount, k, signal_value, signal_type);
   }
