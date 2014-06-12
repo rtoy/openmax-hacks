@@ -109,24 +109,24 @@ void TimeFFTUsage(char* prog) {
       "              4 - Complex 32-bit\n"
       "              5 - Real 32-bit\n"
 #if defined(HAVE_KISSFFT)
-      "	            10 - KissFFT (complex)\n"
+      "             10 - KissFFT (complex)\n"
       "             11 - KissFFT (real)\n"
 #endif
 #if defined(HAVE_NE10)
-      "	            20 - NE10 complex float\n"
-      "	            21 - NE10 real float\n"
+      "             20 - NE10 complex float\n"
+      "             21 - NE10 real float\n"
 #endif
 #if defined(HAVE_FFMPEG)
-      "	            30 - FFmpeg complex float\n"
-      "	            31 - FFmpeg real float\n"
+      "             30 - FFmpeg complex float\n"
+      "             31 - FFmpeg real float\n"
 #endif
 #if defined(HAVE_CKFFT)
-      "	            40 - Cricket FFT complex float\n"
-      "	            41 - Cricket FFT real float\n"
+      "             40 - Cricket FFT complex float\n"
+      "             41 - Cricket FFT real float\n"
 #endif
 #if defined(HAVE_PFFFT)
-      "	            50 - PFFFT complex float\n"
-      "	            51 - PFFFT real float\n"
+      "             50 - PFFFT complex float\n"
+      "             51 - PFFFT real float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
