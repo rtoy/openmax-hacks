@@ -38,7 +38,7 @@
         #'Ne10/modules/dsp/NE10_init_dsp.c',
         #'Ne10/modules/dsp/NE10_rfft.c',
         #'Ne10/modules/dsp/NE10_rfft_init.c',
-        'Ne10/modules/dsp/NE10_rfft.neon.c',
+        #'Ne10/modules/dsp/NE10_rfft.neon.c',
         #'Ne10/modules/dsp/NE10_rfft.neon.s',
         'Ne10/modules/dsp/NE10_fft_float32.neon.c',
         'Ne10/modules/dsp/NE10_fft_float32.neon_s.s',
