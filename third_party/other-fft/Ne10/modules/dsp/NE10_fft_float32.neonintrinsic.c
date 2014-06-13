@@ -1507,7 +1507,7 @@ void ne10_fft_r2c_1d_float32_neon (ne10_fft_cpx_float32_t *fout,
     ne10_int32_t ncfft = nfft >> 1;
 
     /* malloc a temp buffer for cfft */
-    ne10_fft_cpx_float32_t * tmpbuf_ = (ne10_fft_cpx_float32_t*) NE10_MALLOC (sizeof (ne10_fft_cpx_float32_t) * ncfft * 4);
+    ne10_fft_cpx_float32_t * tmpbuf_ = (ne10_fft_cpx_float32_t*) NE10_MALLOC (sizeof (ne10_fft_cpx_float32_t) * ncfft);
 
     // copy the data from input to output and bit reversal
     ne10_fft_c2c_1d_float32_neon (tmpbuf_, (ne10_fft_cpx_float32_t*) fin, twiddles, factors, ncfft, 0);
@@ -1540,7 +1540,7 @@ void ne10_fft_c2r_1d_float32_neon (ne10_float32_t *fout,
     ne10_int32_t ncfft = nfft >> 1;
 
     /* malloc a temp buffer for split */
-    ne10_fft_cpx_float32_t * tmpbuf_ = (ne10_fft_cpx_float32_t*) NE10_MALLOC (sizeof (ne10_fft_cpx_float32_t) * ncfft * 4);
+    ne10_fft_cpx_float32_t * tmpbuf_ = (ne10_fft_cpx_float32_t*) NE10_MALLOC (sizeof (ne10_fft_cpx_float32_t) * ncfft);
 
     ne10_fft_split_c2r_1d_float32_neon (tmpbuf_, fin, super_twiddles, ncfft);
 
