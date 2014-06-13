@@ -181,7 +181,6 @@ void TimeNE10FFT(int count, float signal_value, int signal_type) {
   if (verbose == 0)
     printf("%s NE10 FFT\n", do_forward_test ? "Forward" : "Inverse");
   
-  // Currently, NE10 only supports sizes 16, 64, 256, and 1024 (Order 4, 6, 8, 10).
   for (k = min_fft_order; k <= max_fft_order; k++) {
     int testCount = ComputeCount(count, k);
     TimeOneNE10FFT(testCount, k, signal_value, signal_type);
