@@ -234,7 +234,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       ne10_fft_c2r_1d_float32_neon(z,
-                                   (ne10_fft_cpx_float32_t *) y,
+                                   (ne10_fft_cpx_float32_t *) y_true,
                                    fft_fwd_spec->twiddles,
                                    fft_fwd_spec->super_twiddles,
                                    fft_fwd_spec->factors,
@@ -283,6 +283,8 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
     PrintResult("Inverse NE10 RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
+      printf("Input data:\n");
+      DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y_true);
       printf("IFFT Actual:\n");
       DumpArrayFloat("z", fft_size, z);
       printf("IFFT Expected:\n");
