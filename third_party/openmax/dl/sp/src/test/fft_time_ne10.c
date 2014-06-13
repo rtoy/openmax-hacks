@@ -33,6 +33,8 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
   struct ComplexFloat* x;
   struct ComplexFloat* y;
   OMX_FC32* z;
+  struct AlignedPtr* temp_aligned;
+  struct ComplexFloat* temp;
 
   struct ComplexFloat* y_true;
 
@@ -51,12 +53,14 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
   x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * 2 * fft_size);
   z_aligned = AllocAlignedPointer(32, sizeof(*z) * 2 * fft_size);
+  temp_aligned = AllocAlignedPointer(32, sizeof(*x) * 2 * fft_size);
 
   y_true = (struct ComplexFloat*) malloc(sizeof(*y_true) * fft_size);
 
   x = x_aligned->aligned_pointer_;
   y = y_aligned->aligned_pointer_;
   z = z_aligned->aligned_pointer_;
+  temp = temp_aligned->aligned_pointer_;
 
   GenerateTestSignalAndFFT(x, y_true, fft_size, signal_type, signal_value, 0);
 
@@ -70,8 +74,13 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
   if (do_forward_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      ne10_fft_c2c_1d_float32_neon((ne10_fft_cpx_float32_t *) y,
-                                   (ne10_fft_cpx_float32_t *) x,
+      /*
+       * This routine destroys its input.  Copy the input to temp
+       * buffer to be used by the FFT.
+       */
+      memcpy(temp, x, fft_size * sizeof(ne10_fft_cpx_float32_t));
+      ne10_fft_c2c_1d_float32_c((ne10_fft_cpx_float32_t *) y,
+                                   (ne10_fft_cpx_float32_t *) temp,
                                    fft_fwd_spec->twiddles,
                                    fft_fwd_spec->factors,
                                    fft_size,
@@ -100,9 +109,13 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
   if (do_inverse_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-
+      /*
+       * This routine destroys its input.  Copy the input to temp
+       * buffer to be used by the FFT.
+       */
+      memcpy(temp, y_true, fft_size * sizeof(ne10_fft_cpx_float32_t));
       ne10_fft_c2c_1d_float32_neon((ne10_fft_cpx_float32_t *) z,
-                                   (ne10_fft_cpx_float32_t *) y_true,
+                                   (ne10_fft_cpx_float32_t *) temp,
                                    fft_fwd_spec->twiddles,
                                    fft_fwd_spec->factors,
                                    fft_size,
@@ -196,6 +209,8 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
 
   fft_size = 1 << fft_log_size;
 
@@ -234,7 +249,11 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size / 2 + 1);
+    
     PrintResult("Forward NE10 RFFT", fft_log_size, elapsed_time, count);
+    printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+
     if (verbose >= 255) {
       printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size / 2 + 1, y);
@@ -294,7 +313,11 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
+
     PrintResult("Inverse NE10 RFFT", fft_log_size, elapsed_time, count);
+    printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+
     if (verbose >= 255) {
       printf("Input data:\n");
       DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y_true);
