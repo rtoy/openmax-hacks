@@ -10,6 +10,7 @@
 #include "dl/sp/api/armSP.h"
 #include "dl/sp/api/omxSP.h"
 #include "dl/sp/src/test/aligned_ptr.h"
+#include "dl/sp/src/test/compare.h"
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 #include "../other-fft/Ne10/inc/NE10_types.h"
@@ -42,6 +43,8 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
 
   fft_size = 1 << fft_log_size;
 
@@ -78,7 +81,12 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size);
+    
     PrintResult("Forward NE10 FFT", fft_log_size, elapsed_time, count);
+    if (verbose > 0)
+      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+
     if (verbose >= 255) {
       printf("Input data:\n");
       DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
@@ -94,7 +102,7 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
     for (n = 0; n < count; ++n) {
 
       ne10_fft_c2c_1d_float32_neon((ne10_fft_cpx_float32_t *) z,
-                                   (ne10_fft_cpx_float32_t *) y,
+                                   (ne10_fft_cpx_float32_t *) y_true,
                                    fft_fwd_spec->twiddles,
                                    fft_fwd_spec->factors,
                                    fft_size,
@@ -131,7 +139,12 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareComplexFloat(&snr_inverse, (OMX_FC32*) z, (OMX_FC32*) x, fft_size);
+
     PrintResult("Inverse NE10 FFT", fft_log_size, elapsed_time, count);
+    if (verbose > 0) 
+      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+
     if (verbose >= 255) {
       printf("Input data:\n");
       DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y_true);
