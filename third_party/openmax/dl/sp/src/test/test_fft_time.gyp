@@ -29,6 +29,16 @@
       '../../../dl.gyp:openmax_dl',
       'test_utilities'
     ],
+    'cflags!': [
+      '-mfpu=vfpv3-d16',
+      '-Os',
+    ],
+    'cflags': [
+      # We enable Neon instructions even with arm_neon==0, to support
+      # runtime detection.
+      '-mfpu=neon',
+      '-O2',
+    ],
     'conditions': [
       ['big_float_fft == 1', {
         'defines': [
