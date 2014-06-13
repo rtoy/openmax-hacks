@@ -192,7 +192,8 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   OMX_F32* x;                   /* Source */
   OMX_FC32* y;                  /* Transform */
   OMX_F32* z;                   /* Inverse transform */
-  OMX_F32* temp;
+  struct AlignedPtr* temp_aligned;
+  struct ComplexFloat* temp;
 
   OMX_F32* y_true;              /* True FFT */
 
@@ -217,10 +218,12 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   /* The transformed value is in CCS format, and it has fft_size + 2 values */
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * (4 * fft_size + 2));
   z_aligned = AllocAlignedPointer(32, sizeof(*z) * 4 * fft_size);
-
+  temp_aligned = AllocAlignedPointer(32, sizeof(*x) * 4 * fft_size);
+  
   x = x_aligned->aligned_pointer_;
   y = y_aligned->aligned_pointer_;
   z = z_aligned->aligned_pointer_;
+  temp = temp_aligned->aligned_pointer_;
 
   y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
 
@@ -237,8 +240,13 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   if (do_forward_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
+      /*
+       * This routine destroys its input.  Copy the input to temp
+       * buffer to be used by the FFT.
+       */
+      memcpy(temp, x, fft_size * sizeof(float));
       ne10_fft_r2c_1d_float32_neon((ne10_fft_cpx_float32_t *) y,
-                                   x,
+                                   (ne10_float32_t *) temp,
                                    fft_fwd_spec->twiddles,
                                    fft_fwd_spec->super_twiddles,
                                    fft_fwd_spec->factors,
