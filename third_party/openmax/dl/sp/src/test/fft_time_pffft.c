@@ -153,7 +153,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
 
   float* x;
   struct ComplexFloat* y;
-  OMX_FC32* z;
+  OMX_F32* z;
 
   float* y_true;
   float* true;
@@ -228,8 +228,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
        * Need to include cost of scaling the inverse
        */
       for (m = 0; m < fft_size; ++m) {
-        z[m].Re *= scale;
-        z[m].Im *= scale;
+        z[m] *= scale;
       }
     }
     GetUserTime(&end_time);
@@ -246,9 +245,9 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
     PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
-      DumpArrayComplexFloat("z", fft_size, z);
+      DumpArrayFloat("z", fft_size, z);
       printf("IFFT Expected:\n");
-      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
+      DumpArrayFloat("x", fft_size, x);
     }
   }
 
@@ -268,7 +267,7 @@ void TimePfRFFT(int count, float signal_value, int signal_type) {
     printf("%s PFFFT RFFT\n", do_forward_test ? "Forward" : "Inverse");
 
   /*
-   * Orders less than 8 are not supported by PFFFT.
+   * Orders less than 5 are not supported by PFFFT.
    */
   min_order = min_fft_order < 5 ? 5 : min_fft_order;
   
