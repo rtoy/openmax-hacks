@@ -78,6 +78,7 @@ void TimeSC32FFT(int count, float signal_value, int signal_type);
 void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
                    int signal_type);
 void TimeRFFT32(int count, float signal_value, int signal_type);
+#endif
 
 #ifdef HAVE_KISSFFT
 void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
@@ -140,6 +141,7 @@ void TimeFFTUsage(char* prog) {
       "              3 - Real 16-bit\n"
       "              4 - Complex 32-bit\n"
       "              5 - Real 32-bit\n"
+#endif
 #if defined(HAVE_KISSFFT)
       "             10 - KissFFT (complex)\n"
       "             11 - KissFFT (real)\n"
@@ -328,6 +330,7 @@ int main(int argc, char* argv[]) {
       case 5:
         TimeRFFT32(count, signal_value, signal_type);
         break;
+#endif
 #if defined(HAVE_KISSFFT)
       case 10:
         TimeKissFFT(count, signal_value, signal_type);
@@ -377,22 +380,6 @@ int main(int argc, char* argv[]) {
   }
 
   return 0;
-}
-
-void GetUserTime(struct timeval* time) {
-  struct rusage usage;
-  getrusage(RUSAGE_SELF, &usage);
-  memcpy(time, &usage.ru_utime, sizeof(*time));
-}
-
-double TimeDifference(const struct timeval * start,
-                      const struct timeval * end) {
-  double start_time;
-  double end_time;
-  start_time = start->tv_sec + start->tv_usec * 1e-6;
-  end_time = end->tv_sec + end->tv_usec * 1e-6;
-
-  return end_time - start_time;
 }
 
 void PrintShortHeader(const char* message) {
