@@ -21,85 +21,59 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 
-#if defined(HAVE_KISSFFT)
-#include "../other-fft/kiss_fft130/kiss_fft.h"
-#endif
-
-#if defined(HAVE_NE10)
-#include "../other-fft/Ne10/inc/NE10_types.h"
-#endif
-
-#if defined(HAVE_FFMPEG)
-#include "../other-fft/ffmpeg/libavcodec/avfft.h"
-#endif
-
-#if defined(HAVE_CKFFT)
-#include "../other-fft/ckfft-1.0/inc/ckfft/ckfft.h"
-#endif
-
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 #define MAX_FFT_ORDER_FIXED_POINT 12
+
+#define ENABLE_FIXED_POINT_FFT_TESTS
+
+#if defined(FLOAT_ONLY) || defined(ARM_VFP_TEST)
+/*
+ * Fixed-point FFTs are disabled if we only want float tests or if
+ * we're building for non-NEON tests.
+ */
+#undef ENABLE_FIXED_POINT_FFT_TESTS
+#endif
+
+#if defined(ARM_VFP_TEST)
+#define FORWARD_FLOAT_FFT   omxSP_FFTFwd_CToC_FC32_Sfs_vfp
+#define INVERSE_FLOAT_FFT   omxSP_FFTInv_CToC_FC32_Sfs_vfp
+#define FORWARD_FLOAT_RFFT  omxSP_FFTFwd_RToCCS_F32_Sfs_vfp
+#define INVERSE_FLOAT_RFFT  omxSP_FFTInv_CCSToR_F32_Sfs_vfp
+#else
+#define FORWARD_FLOAT_FFT   omxSP_FFTFwd_CToC_FC32_Sfs
+#define INVERSE_FLOAT_FFT   omxSP_FFTInv_CToC_FC32_Sfs
+#define FORWARD_FLOAT_RFFT  omxSP_FFTFwd_RToCCS_F32_Sfs
+#define INVERSE_FLOAT_RFFT  omxSP_FFTInv_CCSToR_F32_Sfs
+#endif
 
 typedef enum {
   S16,
   S32,
 } s16_s32;
 
+#if defined(__arm__) || defined(__aarch64__)
 void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
                      int signal_type);
 void TimeFloatFFT(int count, float signal_value, int signal_type);
+#endif
+
 void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
                       int signal_type);
 void TimeFloatRFFT(int count, float signal_value, int signal_type);
-void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
-                    int signal_type);
-void TimeSC32FFT(int count, float signal_value, int signal_type);
+
+#ifdef ENABLE_FIXED_POINT_FFT_TESTS
 void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
                     int signal_type);
 void TimeSC16FFT(int count, float signal_value, int signal_type);
 void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
                    int signal_type, s16_s32 s16s32);
 void TimeRFFT16(int count, float signal_value, int signal_type);
-void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
+void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
                     int signal_type);
-void TimeSC16FFT(int count, float signal_value, int signal_type);
+void TimeSC32FFT(int count, float signal_value, int signal_type);
 void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
                    int signal_type);
 void TimeRFFT32(int count, float signal_value, int signal_type);
-
-#if defined(HAVE_KISSFFT)
-void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
-		    int signal_type);
-void TimeKissFFT(int count, float signal_value, int signal_type);
-#endif
-
-#if defined(HAVE_NE10)
-void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
-		    int signal_type);
-void TimeNE10FFT(int count, float signal_value, int signal_type);
-void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
-		    int signal_type);
-void TimeNE10RFFT(int count, float signal_value, int signal_type);
-#endif
-
-#if defined(HAVE_FFMPEG)
-void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
-		      int signal_type);
-void TimeFFmpegFFT(int count, float signal_value, int signal_type);
-void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
-                       int signal_type);
-void TimeFFmpegRFFT(int count, float signal_value, int signal_type);
-#endif
-
-#if defined(HAVE_CKFFT)
-void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
-		      int signal_type);
-void TimeCkFFTFFT(int count, float signal_value, int signal_type);
-#if 0
-void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
-                       int signal_type);
-void TimeCkFFTRFFT(int count, float signal_value, int signal_type);
-#endif
 #endif
 
 static int verbose = 1;
@@ -117,7 +91,11 @@ void TimeFFTUsage(char* prog) {
       "    [-m minFFTsize] [-M maxFFTsize]\n",
           ProgramName(prog));
   fprintf(stderr, 
-      "Simple FFT timing tests\n"
+#ifndef ARM_VFP_TEST
+      "Simple FFT timing tests (NEON)\n"
+#else
+      "Simple FFT timing tests (non-NEON)\n"
+#endif
       "  -h          This help\n"
       "  -v level    Verbose output level (default = 1)\n"
       "  -F          Skip forward FFT tests\n"
@@ -134,24 +112,15 @@ void TimeFFTUsage(char* prog) {
       "  -T          Run just one FFT timing test\n"
       "  -f          FFT type:\n"
       "              0 - Complex Float\n"
+#if defined(__arm__) || defined(__aarch64__)
       "              1 - Real Float\n"
+#endif
+#ifdef ENABLE_FIXED_POINT_FFT_TESTS
       "              2 - Complex 16-bit\n"
       "              3 - Real 16-bit\n"
       "              4 - Complex 32-bit\n"
       "              5 - Real 32-bit\n"
-#if defined(HAVE_KISSFFT)
-      "	             6 - KissFFT (complex)\n"
-#endif
-#if defined(HAVE_NE10)
-      "	             7 - NE10 complex float\n"
-      "	             8 - NE10 real float\n"
-#endif
-#if defined(HAVE_FFMPEG)
-      "	             9 - FFmpeg complex float\n"
-      "	             10 - FFmpeg real float\n"
-#endif
-#if defined(HAVE_CKFFT)
-      "	             11 - Cricket FFT complex float\n"
+#else
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -172,13 +141,13 @@ void TimeFFTUsage(char* prog) {
 }
 
 /* TODO(kma/ajm/rtoy): use strings instead of numbers for fft_type. */
-void main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   int fft_log_size = 4;
   float signal_value = 32767;
   int signal_type = 0;
   int test_mode = 1;
   int count = 100;
-  int fft_type = -1;
+  int fft_type = 0;
   int fft_type_given = 0;
 
   int opt;
@@ -248,46 +217,27 @@ void main(int argc, char* argv[]) {
     printf("Warning:  -f ignored when -T not specified\n");
 
   if (test_mode) {
-    if ((fft_type == -1) || (fft_type == 0))
-      TimeFloatFFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 1))
-      TimeFloatRFFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 2))
-      TimeSC16FFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 3))
-      TimeRFFT16(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 4))
-      TimeSC32FFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 5))
-      TimeRFFT32(count, signal_value, signal_type);
-#if defined(HAVE_KISSFFT)
-    if ((fft_type == -1) || (fft_type == 6))
-      TimeKissFFT(count, signal_value, signal_type);
+#if defined(__arm__) || defined(__aarch64__)
+    TimeFloatFFT(count, signal_value, signal_type);
 #endif
-#if defined(HAVE_NE10)
-    if ((fft_type == -1) || (fft_type == 7))
-      TimeNE10FFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 8))
-      TimeNE10RFFT(count, signal_value, signal_type);
-#endif
-#if defined(HAVE_FFMPEG)
-    if ((fft_type == -1) || (fft_type == 9))
-      TimeFFmpegFFT(count, signal_value, signal_type);
-    if ((fft_type == -1) || (fft_type == 10))
-      TimeFFmpegRFFT(count, signal_value, signal_type);
-#endif
-#if defined(HAVE_CKFFT)
-    if ((fft_type == -1) || (fft_type == 11))
-      TimeCkFFTFFT(count, signal_value, signal_type);
+    TimeFloatRFFT(count, signal_value, signal_type);
+#ifdef ENABLE_FIXED_POINT_FFT_TESTS
+    TimeSC16FFT(count, signal_value, signal_type);
+    TimeRFFT16(count, signal_value, signal_type);
+    TimeSC32FFT(count, signal_value, signal_type);
+    TimeRFFT32(count, signal_value, signal_type);
 #endif
   } else {
     switch (fft_type) {
+#if defined(__arm__) || defined(__aarch64__)
       case 0:
         TimeOneFloatFFT(count, fft_log_size, signal_value, signal_type);
         break;
+#endif
       case 1:
         TimeOneFloatRFFT(count, fft_log_size, signal_value, signal_type);
         break;
+#ifdef ENABLE_FIXED_POINT_FFT_TESTS
       case 2:
         TimeOneSC16FFT(count, fft_log_size, signal_value, signal_type);
         break;
@@ -301,37 +251,14 @@ void main(int argc, char* argv[]) {
       case 5:
         TimeOneRFFT32(count, fft_log_size, signal_value, signal_type);
         break;
-#if defined(HAVE_KISSFFT)
-      case 6:
-        TimeOneKissFFT(count, fft_log_size, signal_value, signal_type);
-        break;
-#endif
-#if defined(HAVE_NE10)
-      case 7:
-        TimeOneNE10FFT(count, fft_log_size, signal_value, signal_type);
-        break;
-      case 8:
-        TimeOneNE10RFFT(count, fft_log_size, signal_value, signal_type);
-        break;
-#endif
-#if defined(HAVE_FFMPEG)
-      case 9:
-        TimeOneFFmpegFFT(count, fft_log_size, signal_value, signal_type);
-        break;
-      case 10:
-        TimeOneFFmpegRFFT(count, fft_log_size, signal_value, signal_type);
-        break;
-#endif
-#if defined(HAVE_CKFFT)
-      case 11:
-        TimeOneCkFFTFFT(count, fft_log_size, signal_value, signal_type);
-        break;
 #endif
       default:
         fprintf(stderr, "Unknown FFT type: %d\n", fft_type);
         break;
     }
   }
+
+  return 0;
 }
 
 void GetUserTime(struct timeval* time) {
@@ -348,6 +275,17 @@ double TimeDifference(const struct timeval * start,
   end_time = end->tv_sec + end->tv_usec * 1e-6;
 
   return end_time - start_time;
+}
+
+void PrintShortHeader(const char* message) {
+  if (do_forward_test && do_inverse_test) {
+    /* Do nothing if both forward and inverse tests are being run. */
+  } else if (do_forward_test) {
+    printf("Forward ");
+  } else {
+    printf("Inverse ");
+  }
+  printf("%s\n", message);
 }
 
 void PrintResult(const char* prefix, int fft_log_size, double elapsed_time,
@@ -384,7 +322,8 @@ int ComputeCount(int nominal_count, int fft_log_size) {
 
   return count;
 }
-
+
+#if defined(__arm__) || defined(__aarch64__)
 void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
                      int signal_type) {
   struct AlignedPtr* x_aligned;
@@ -429,7 +368,7 @@ void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
   if (do_forward_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      omxSP_FFTFwd_CToC_FC32_Sfs(x, y, fft_fwd_spec);
+      FORWARD_FLOAT_FFT((OMX_FC32*) x, (OMX_FC32*) y, fft_fwd_spec);
     }
     GetUserTime(&end_time);
 
@@ -441,7 +380,7 @@ void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
   if (do_inverse_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      omxSP_FFTInv_CToC_FC32_Sfs(y, z, fft_inv_spec);
+      INVERSE_FLOAT_FFT((OMX_FC32*) y, z, fft_inv_spec);
     }
     GetUserTime(&end_time);
 
@@ -462,13 +401,14 @@ void TimeFloatFFT(int count, float signal_value, int signal_type) {
   int k;
 
   if (verbose == 0)
-    printf("Float FFT\n");
+    PrintShortHeader("Float FFT");
 
   for (k = min_fft_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneFloatFFT(testCount, k, signal_value, signal_type);
   }
 }
+#endif
 
 void GenerateRealFloatSignal(OMX_F32* x, OMX_FC32* fft, int size,
                              int signal_type, float signal_value)
@@ -548,7 +488,7 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
   if (do_forward_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      omxSP_FFTFwd_RToCCS_F32_Sfs(x, y, fft_fwd_spec);
+      FORWARD_FLOAT_RFFT(x, y, fft_fwd_spec);
     }
     GetUserTime(&end_time);
 
@@ -560,7 +500,7 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
   if (do_inverse_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      omxSP_FFTInv_CCSToR_F32_Sfs(y, z, fft_inv_spec);
+      INVERSE_FLOAT_RFFT(y, z, fft_inv_spec);
     }
     GetUserTime(&end_time);
 
@@ -580,14 +520,15 @@ void TimeFloatRFFT(int count, float signal_value, int signal_type) {
   int k;
 
   if (verbose == 0)
-    printf("Float RFFT\n");
-
+    PrintShortHeader("Float RFFT");
+  
   for (k = min_fft_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneFloatRFFT(testCount, k, signal_value, signal_type);
   }
 }
 
+#ifdef ENABLE_FIXED_POINT_FFT_TESTS
 void generateSC32Signal(OMX_SC32* x, OMX_SC32* fft, int size, int signal_type,
                         float signal_value) {
   int k;
@@ -762,7 +703,7 @@ void TimeSC32FFT(int count, float signal_value, int signal_type) {
       ? MAX_FFT_ORDER_FIXED_POINT : max_fft_order;
 
   if (verbose == 0)
-    printf("SC32 FFT\n");
+    PrintShortHeader("SC32 FFT");
 
   for (k = min_fft_order; k <= max_order; ++k) {
     int testCount = ComputeCount(count, k);
@@ -944,7 +885,7 @@ void TimeSC16FFT(int count, float signal_value, int signal_type) {
       ? MAX_FFT_ORDER_FIXED_POINT : max_fft_order;
 
   if (verbose == 0)
-    printf("SC16 FFT\n");
+    PrintShortHeader("SC16 FFT");
 
   for (k = min_fft_order; k <= max_order; ++k) {
     int testCount = ComputeCount(count, k);
@@ -1119,10 +1060,12 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
     elapsed_time = TimeDifference(&start_time, &end_time);
 
     if(s16s32 == S32) {
-      PrintResult("Forward RFFT16 (with S32)", fft_log_size, elapsed_time, count);
+      PrintResult("Forward RFFT16 (with S32)",
+                  fft_log_size, elapsed_time, count);
     }
     else {
-      PrintResult("Forward RFFT16 (with S16)", fft_log_size, elapsed_time, count);
+      PrintResult("Forward RFFT16 (with S16)",
+                  fft_log_size, elapsed_time, count);
     }
   }
 
@@ -1180,10 +1123,12 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
     elapsed_time = TimeDifference(&start_time, &end_time);
 
     if(s16s32 == S32) {
-      PrintResult("Inverse RFFT16 (with S32)", fft_log_size, elapsed_time, count);
+      PrintResult("Inverse RFFT16 (with S32)",
+                  fft_log_size, elapsed_time, count);
     }
     else {
-      PrintResult("Inverse RFFT16 (with S16)", fft_log_size, elapsed_time, count);
+      PrintResult("Inverse RFFT16 (with S16)",
+                  fft_log_size, elapsed_time, count);
     }
   }
 
@@ -1203,14 +1148,16 @@ void TimeRFFT16(int count, float signal_value, int signal_type) {
       ? MAX_FFT_ORDER_FIXED_POINT : max_fft_order;
 
   if (verbose == 0)
-    printf("RFFT16 (with S32)\n");
+    PrintShortHeader("RFFT16 (with S32)");
+
   for (k = min_fft_order; k <= max_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneRFFT16(testCount, k, signal_value, signal_type, 1);
   }
 
   if (verbose == 0)
-    printf("RFFT16 (with S16)\n");
+    PrintShortHeader("RFFT16 (with S16)");
+
   for (k = min_fft_order; k <= max_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneRFFT16(testCount, k, signal_value, signal_type, 0);
@@ -1430,978 +1377,11 @@ void TimeRFFT32(int count, float signal_value, int signal_type) {
       ? MAX_FFT_ORDER_FIXED_POINT : max_fft_order;
 
   if (verbose == 0)
-    printf("RFFT32\n");
+    PrintShortHeader("RFFT32");
 
   for (k = min_fft_order; k <= max_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneRFFT32(testCount, k, signal_value, signal_type);
   }
 }
-
-#if defined(HAVE_KISSFFT)
-void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
-                     int signal_type) {
-  struct AlignedPtr* x_aligned;
-  struct AlignedPtr* y_aligned;
-  struct AlignedPtr* z_aligned;
-
-  kiss_fft_cpx* x;
-  kiss_fft_cpx* y;
-  kiss_fft_cpx* z;
-
-  struct ComplexFloat* y_true;
-
-  int n;
-  kiss_fft_cfg fft_fwd_spec;
-  kiss_fft_cfg fft_inv_spec;
-  int fft_size;
-  struct timeval start_time;
-  struct timeval end_time;
-  double elapsed_time;
-
-  fft_size = 1 << fft_log_size;
-
-  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
-  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
-  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
-
-  y_true = (struct ComplexFloat*) malloc(sizeof(*y_true) * fft_size);
-
-  x = x_aligned->aligned_pointer_;
-  y = y_aligned->aligned_pointer_;
-  z = z_aligned->aligned_pointer_;
-
-  GenerateTestSignalAndFFT((struct ComplexFloat*) x, y_true, fft_size, signal_type, signal_value, 0);
-
-  fft_fwd_spec = kiss_fft_alloc(fft_size, 0, 0, 0);
-  fft_inv_spec = kiss_fft_alloc(fft_size, 1, 0, 0);
-
-  if (do_forward_test) {
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      kiss_fft(fft_fwd_spec, x, y);
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("FFT Actual:\n");
-      DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
-      printf("FFT Expected:\n");
-      DumpArrayComplexFloat("true", fft_size, (OMX_FC32*) y_true);
-    }
-  }
-
-  if (do_inverse_test) {
-    double scale = 1.0 / fft_size;
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      int k;
-      kiss_fft(fft_inv_spec, (kiss_fft_cpx*) y_true, z);
-
-      // kiss_fft does not scale the inverse transform so do it here.
-      
-      for (k = 0; k < fft_size; ++k) {
-        z[k].r *= scale;
-        z[k].i *= scale;
-      }
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("IFFT Actual:\n");
-      DumpArrayComplexFloat("z", fft_size, (OMX_FC32*) z);
-      printf("IFFT Expected:\n");
-      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
-      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "z", "z");
-    }
-  }
-
-  FreeAlignedPointer(x_aligned);
-  FreeAlignedPointer(y_aligned);
-  FreeAlignedPointer(z_aligned);
-  free(y_true);
-  free(fft_fwd_spec);
-  free(fft_inv_spec);
-}
-
-void TimeKissFFT(int count, float signal_value, int signal_type) {
-  int k;
-
-  if (verbose == 0)
-    printf("%s Kiss FFT\n", do_forward_test ? "Forward" : "Inverse");
-  
-  for (k = min_fft_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k);
-    TimeOneKissFFT(testCount, k, signal_value, signal_type);
-  }
-}
-#endif
-
-#if defined(HAVE_NE10)
-void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
-                    int signal_type) {
-  struct AlignedPtr* x_aligned;
-  struct AlignedPtr* y_aligned;
-  struct AlignedPtr* z_aligned;
-
-  struct ComplexFloat* x;
-  struct ComplexFloat* y;
-  OMX_FC32* z;
-
-  struct ComplexFloat* y_true;
-
-  int n;
-  ne10_result_t status;
-  ne10_cfft_radix4_instance_f32_t fft_fwd_spec;
-  ne10_cfft_radix4_instance_f32_t fft_inv_spec ;
-  int fft_size;
-  struct timeval start_time;
-  struct timeval end_time;
-  double elapsed_time;
-
-  fft_size = 1 << fft_log_size;
-
-  if (!((fft_size == 16) || (fft_size == 64) || (fft_size == 256) || (fft_size == 1024))) {
-    fprintf(stderr, "NE10 FFT: invalid FFT size: %d\n", fft_size);
-    return;
-  }
-  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
-  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
-  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
-
-  y_true = (struct ComplexFloat*) malloc(sizeof(*y_true) * fft_size);
-
-  x = x_aligned->aligned_pointer_;
-  y = y_aligned->aligned_pointer_;
-  z = z_aligned->aligned_pointer_;
-
-  GenerateTestSignalAndFFT(x, y_true, fft_size, signal_type, signal_value, 0);
-
-  status = ne10_cfft_radix4_init_float(&fft_fwd_spec, fft_size, 0);
-  if (status == NE10_ERR) {
-    fprintf(stderr, "NE10 FFT: Cannot initialize FFT structure for order %d\n", fft_log_size);
-    return;
-  }
-  ne10_cfft_radix4_init_float(&fft_inv_spec, fft_size, 1);
-  
-  if (do_forward_test) {
-    // Ne10 FFTs destroy the input.
-    struct ComplexFloat *saved_x =
-        (struct ComplexFloat*) malloc(fft_size * sizeof(struct ComplexFloat*));
-    
-    memcpy(saved_x, x, fft_size * sizeof(struct ComplexFloat*));
-
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(x, saved_x, fft_size * sizeof(struct ComplexFloat*));
-      ne10_radix4_butterfly_float_neon(y, x, fft_size, fft_fwd_spec.p_twiddle);
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    PrintResult("Forward NE10 FFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("FFT Actual:\n");
-      DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
-      printf("FFT Expected:\n");
-      DumpArrayComplexFloat("true", fft_size, (OMX_FC32*) y_true);
-    }
-
-    free(saved_x);
-  }
-
-  if (do_inverse_test) {
-    // Ne10 FFTs destroy the input.
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(y, y_true, fft_size * sizeof(*y));
-
-      // The inverse doesn't appear to be working.  Or I'm calling it
-      // incorrectly.
-      ne10_radix4_butterfly_inverse_float_neon(z,
-                                               y,
-                                               fft_size,
-                                               fft_inv_spec.p_twiddle,
-                                               fft_inv_spec.one_by_fft_len);
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    PrintResult("Inverse NE10 FFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("IFFT Actual:\n");
-      DumpArrayComplexFloat("z", fft_size, z);
-      printf("IFFT Expected:\n");
-      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
-    }
-  }
-
-  FreeAlignedPointer(x_aligned);
-  FreeAlignedPointer(y_aligned);
-  FreeAlignedPointer(z_aligned);
-  free(y_true);
-}
-
-void TimeNE10FFT(int count, float signal_value, int signal_type) {
-  int k;
-
-  if (verbose == 0)
-    printf("%s NE10 FFT\n", do_forward_test ? "Forward" : "Inverse");
-  
-  // Currently, NE10 only supports sizes 16, 64, 256, and 1024 (Order 4, 6, 8, 10).
-  for (k = 4; k <= 10; k += 2) {
-    int testCount = ComputeCount(count, k);
-    TimeOneNE10FFT(testCount, k, signal_value, signal_type);
-  }
-}
-
-void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
-                     int signal_type) {
-  OMX_F32* x;                   /* Source */
-  OMX_FC32* y;                  /* Transform */
-  OMX_F32* z;                   /* Inverse transform */
-  OMX_F32* temp;
-
-  OMX_F32* y_true;              /* True FFT */
-
-  struct AlignedPtr* x_aligned;
-  struct AlignedPtr* y_aligned;
-  struct AlignedPtr* z_aligned;
-  struct AlignedPtr* t_aligned;
-
-
-  int n;
-  ne10_result_t status;
-  ne10_cfft_radix4_instance_f32_t fft_fwd_spec;
-  ne10_cfft_radix4_instance_f32_t fft_inv_spec ;
-  ne10_rfft_instance_f32_t rfft_fwd_spec;
-  ne10_rfft_instance_f32_t rfft_inv_spec;
-  
-  int fft_size;
-  struct timeval start_time;
-  struct timeval end_time;
-  double elapsed_time;
-
-  fft_size = 1 << fft_log_size;
-
-  if (!((fft_size == 128) || (fft_size == 512) || (fft_size == 2048))) {
-    fprintf(stderr, "NE10 RFFT: invalid FFT size: %d\n", fft_size);
-    return;
-  }
-
-  x_aligned = AllocAlignedPointer(32, sizeof(*x) * 2 * fft_size);
-  /* The transformed value is in CCS format and is has fft_size + 2 values */
-  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (2 * fft_size + 2));
-  z_aligned = AllocAlignedPointer(32, sizeof(*z) * 2 * fft_size);
-  t_aligned = AllocAlignedPointer(32, sizeof(*temp) * (2 * fft_size + 2));
-
-  x = x_aligned->aligned_pointer_;
-  y = y_aligned->aligned_pointer_;
-  z = z_aligned->aligned_pointer_;
-  temp = t_aligned->aligned_pointer_;
-
-  y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
-
-  GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
-                          signal_value);
-
-  status = ne10_rfft_init_float(&rfft_fwd_spec, &fft_fwd_spec, fft_size, 0);
-
-  if (status == NE10_ERR) {
-    fprintf(stderr, "NE10 RFFT: Cannot initialize FFT structure for order %d\n", fft_log_size);
-    return;
-  }
-  ne10_rfft_init_float(&rfft_inv_spec, &fft_inv_spec, fft_size, 1);
-
-  if (do_forward_test) {
-    // Ne10 FFTs destroy the input.
-    float *saved_x = (float*) malloc(fft_size * sizeof(*saved_x));
-
-    memcpy(saved_x, x, fft_size * sizeof(*saved_x));
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(x, saved_x, fft_size * sizeof(*saved_x));
-      ne10_rfft_float_neon(&rfft_fwd_spec, x, y, temp);
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    PrintResult("Forward NE10 RFFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("FFT Actual:\n");
-      DumpArrayComplexFloat("y", fft_size / 2 + 1, y);
-      printf("FFT Expected:\n");
-      DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
-    }
-    free(saved_x);
-  }
-
-  if (do_inverse_test) {
-    // Ne10 FFTs destroy the input.
-
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(y, y_true, (fft_size >> 1) * sizeof(*y));
-      // The inverse appears not to be working.
-      ne10_rfft_float_neon(&rfft_inv_spec, y, z, temp);
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    PrintResult("Inverse NE10 RFFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("IFFT Actual:\n");
-      DumpArrayFloat("z", fft_size, z);
-      printf("IFFT Expected:\n");
-      DumpArrayFloat("x", fft_size, x);
-    }
-  }
-
-  FreeAlignedPointer(x_aligned);
-  FreeAlignedPointer(y_aligned);
-  FreeAlignedPointer(z_aligned);
-}
-
-void TimeNE10RFFT(int count, float signal_value, int signal_type) {
-  int k;
-
-  if (verbose == 0)
-    printf("%s NE10 RFFT\n", do_forward_test ? "Forward" : "Inverse");
-  
-  // The NE10 RFFT routine currently only supports sizes 128, 512, 2048. (Order 7, 9, 11)
-  for (k = 7; k <= 11; k += 2) {
-    int testCount = ComputeCount(count, k);
-    TimeOneNE10RFFT(testCount, k, signal_value, signal_type);
-  }
-}
-
-#endif
-
-#if defined(HAVE_FFMPEG)
-void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
-                     int signal_type) {
-  struct AlignedPtr* x_aligned;
-  struct AlignedPtr* y_aligned;
-  struct AlignedPtr* z_aligned;
-
-  struct ComplexFloat* x;
-  struct ComplexFloat* y;
-  OMX_FC32* z;
-
-  struct ComplexFloat* y_true;
-
-  int n;
-  FFTContext* fft_fwd_spec = NULL;;
-  FFTContext* fft_inv_spec = NULL;
-  int fft_size;
-  struct timeval start_time;
-  struct timeval end_time;
-  double elapsed_time;
-  double copy_time = 0.0;
-
-  fft_size = 1 << fft_log_size;
-
-  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
-  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
-  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
-
-  y_true = (struct ComplexFloat*) malloc(sizeof(*y_true) * fft_size);
-
-  x = x_aligned->aligned_pointer_;
-  y = y_aligned->aligned_pointer_;
-  z = z_aligned->aligned_pointer_;
-
-  GenerateTestSignalAndFFT(x, y_true, fft_size, signal_type, signal_value, 0);
-
-  fft_fwd_spec = av_fft_init(fft_log_size, 0);
-  fft_inv_spec = av_fft_init(fft_log_size, 1);
-
-  /*
-   * Measure how much time we spend doing copies, so we can subtract
-   * them from the elapsed time for the FFTs.
-   */
-  GetUserTime(&start_time);
-  for (n = 0; n < count; ++n) {
-    memcpy(z, y_true, sizeof(*z) * fft_size);
-  }
-  GetUserTime(&end_time);
-  copy_time = TimeDifference(&start_time, &end_time);
-
-  if (do_forward_test) {
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(y, x, sizeof(*y) * fft_size);
-      av_fft_permute(fft_fwd_spec, (FFTComplex*) y);
-      av_fft_calc(fft_fwd_spec, (FFTComplex*) y);
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    if (verbose > 255) {
-      printf("FFT time          :  %g sec\n", elapsed_time);
-      printf("Time for copying  :  %g sec\n", copy_time);
-    }
-
-    elapsed_time -= copy_time;
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
-
-    PrintResult("Forward FFmpeg FFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("FFT Actual:\n");
-      DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
-      printf("FFT Expected:\n");
-      DumpArrayComplexFloat("true", fft_size, (OMX_FC32*) y_true);
-    }
-  }
-
-  if (do_inverse_test) {
-    float scale = 1.0 / fft_size;
-
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      int m;
-      
-      memcpy(z, y_true, sizeof(*z) * fft_size);
-      av_fft_permute(fft_inv_spec, (FFTComplex*) z);
-      av_fft_calc(fft_inv_spec, (FFTComplex*) z);
-
-      // av_fft_calc doesn't scale the inverse by 1/N, so we need to
-      // do it since the other FFTs do.
-      for (m = 0; m < fft_size; ++m) {
-        z[m].Re *= scale;
-        z[m].Im *= scale;
-      }
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    if (verbose > 255) {
-      printf("FFT time          :  %g sec\n", elapsed_time);
-      printf("Time for copying  :  %g sec\n", copy_time);
-    }
-
-    elapsed_time -= copy_time;
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
-
-    PrintResult("Inverse FFmpeg FFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("IFFT Actual:\n");
-      DumpArrayComplexFloat("z", fft_size, z);
-      printf("IFFT Expected:\n");
-      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
-    }
-  }
-
-  FreeAlignedPointer(x_aligned);
-  FreeAlignedPointer(y_aligned);
-  FreeAlignedPointer(z_aligned);
-  free(y_true);
-  free(fft_fwd_spec);
-  free(fft_inv_spec);
-}
-
-void TimeFFmpegFFT(int count, float signal_value, int signal_type) {
-  int k;
-
-  if (verbose == 0)
-    printf("%s FFmpeg FFT\n", do_forward_test ? "Forward" : "Inverse");
-  
-  for (k = min_fft_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k);
-    TimeOneFFmpegFFT(testCount, k, signal_value, signal_type);
-  }
-}
-
-void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
-                      int signal_type) {
-  OMX_F32* x;                   /* Source */
-  OMX_F32* y;                   /* Transform */
-  OMX_F32* z;                   /* Inverse transform */
-
-  OMX_F32* y_true;              /* True FFT */
-
-  struct AlignedPtr* x_aligned;
-  struct AlignedPtr* y_aligned;
-  struct AlignedPtr* z_aligned;
-
-
-  int n;
-  RDFTContext* fft_fwd_spec;
-  RDFTContext* fft_inv_spec;
-  int fft_size;
-  struct timeval start_time;
-  struct timeval end_time;
-  double elapsed_time;
-  double copy_time = 0.0;
-
-  fft_size = 1 << fft_log_size;
-
-  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
-  /* The transformed value is in CCS format and is has fft_size + 2 values */
-  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
-  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
-
-  x = x_aligned->aligned_pointer_;
-  y = y_aligned->aligned_pointer_;
-  z = z_aligned->aligned_pointer_;
-
-  y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
-
-  GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
-                          signal_value);
-
-  fft_fwd_spec = av_rdft_init(fft_log_size, DFT_R2C);
-  fft_inv_spec = av_rdft_init(fft_log_size, IDFT_C2R);
-
-  if (!fft_fwd_spec || !fft_inv_spec) {
-    fprintf(stderr, "TimeOneFFmpegRFFT:  Could not initialize structures for order %d\n",
-            fft_log_size);
-    return;
-  }
-
-  if (do_forward_test) {
-    /*
-     * Measure how much time we spend doing copies, so we can subtract
-     * them from the elapsed time for the FFTs.
-     */
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(y, x, sizeof(*y) * fft_size);
-    }
-    GetUserTime(&end_time);
-    copy_time = TimeDifference(&start_time, &end_time);
-
-    
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(y, x, sizeof(*y) * fft_size);
-      av_rdft_calc(fft_fwd_spec, (FFTSample*) y);
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    if (verbose > 255) {
-      printf("FFT time          :  %g sec\n", elapsed_time);
-      printf("Time for copying  :  %g sec\n", copy_time);
-    }
-
-    elapsed_time -= copy_time;
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
-
-    PrintResult("Forward FFmpeg RFFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      OMX_FC32* fft = (OMX_FC32*) y;
-      printf("FFT Actual (FFMPEG packed format):\n");
-      DumpArrayComplexFloat("y", fft_size / 2, fft);
-      printf("FFT Expected:\n");
-      DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
-    }
-  }
-
-  if (do_inverse_test) {
-    float scale = 2.0 / fft_size;
-    FFTSample* true = (FFTSample*) malloc(sizeof(*true) * (fft_size + 2));
-
-    /* Copy y_true to true, but arrange the values according to what rdft wants. */
-
-    memcpy(true, y_true, sizeof(FFTSample*) * fft_size);
-    true[1] = y_true[fft_size / 2];
-
-    /*
-     * Measure how much time we spend doing copies, so we can subtract
-     * them from the elapsed time for the FFTs.
-     */
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(z, true, sizeof(*z) * fft_size);
-    }
-    GetUserTime(&end_time);
-    copy_time = TimeDifference(&start_time, &end_time);
-
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      int m;
-      
-      memcpy(z, true, sizeof(*z) * fft_size);
-      av_rdft_calc(fft_inv_spec, (FFTSample*) z);
-
-      for (m = 0; m < fft_size; ++m) {
-        z[m] *= scale;
-      }
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    if (verbose > 255) {
-      printf("IFFT time          :  %g sec\n", elapsed_time);
-      printf("Time for copying   :  %g sec\n", copy_time);
-    }
-
-    elapsed_time -= copy_time;
-
-    if (verbose > 255)
-      printf("Effective IFFT time:  %g sec\n", elapsed_time);
-
-    PrintResult("Inverse FFmpeg RFFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("IFFT Actual:\n");
-      DumpArrayFloat("z", fft_size, z);
-      printf("IFFT Expected:\n");
-      DumpArrayFloat("x", fft_size, x);
-    }
-  }
-
-  FreeAlignedPointer(x_aligned);
-  FreeAlignedPointer(y_aligned);
-  FreeAlignedPointer(z_aligned);
-  free(fft_fwd_spec);
-  free(fft_inv_spec);
-}
-
-void TimeFFmpegRFFT(int count, float signal_value, int signal_type) {
-  int k;
-  int min_order;
-
-  if (verbose == 0)
-    printf("%s FFmpeg RFFT\n", do_forward_test ? "Forward" : "Inverse");
-  
-  /* The minimum FFT order for rdft is 4. */
-
-  min_order = min_fft_order < 4 ? 4 : min_fft_order;
-  
-  for (k = min_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k);
-    TimeOneFFmpegRFFT(testCount, k, signal_value, signal_type);
-  }
-}
-
-#endif
-
-#if defined(HAVE_CKFFT)
-void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
-                     int signal_type) {
-  struct AlignedPtr* x_aligned;
-  struct AlignedPtr* y_aligned;
-  struct AlignedPtr* z_aligned;
-
-  struct ComplexFloat* x;
-  struct ComplexFloat* y;
-  OMX_FC32* z;
-
-  struct ComplexFloat* y_true;
-
-  int n;
-  CkFftContext* fft_fwd_spec = NULL;;
-  CkFftContext* fft_inv_spec = NULL;
-  int fft_size;
-  struct timeval start_time;
-  struct timeval end_time;
-  double elapsed_time;
-  double copy_time = 0.0;
-
-  fft_size = 1 << fft_log_size;
-
-  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
-  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
-  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
-
-  y_true = (struct ComplexFloat*) malloc(sizeof(*y_true) * fft_size);
-
-  x = x_aligned->aligned_pointer_;
-  y = y_aligned->aligned_pointer_;
-  z = z_aligned->aligned_pointer_;
-
-  GenerateTestSignalAndFFT(x, y_true, fft_size, signal_type, signal_value, 0);
-
-  fft_fwd_spec = CkFftInit(fft_size, kCkFftDirection_Forward, NULL, NULL);
-  fft_inv_spec = CkFftInit(fft_size, kCkFftDirection_Inverse, NULL, NULL);
-
-  /*
-   * Measure how much time we spend doing copies, so we can subtract
-   * them from the elapsed time for the FFTs.
-   */
-  GetUserTime(&start_time);
-  for (n = 0; n < count; ++n) {
-    memcpy(z, y_true, sizeof(*z) * fft_size);
-  }
-  GetUserTime(&end_time);
-  copy_time = TimeDifference(&start_time, &end_time);
-
-  if (do_forward_test) {
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(y, x, sizeof(*y) * fft_size);
-      CkFftComplexForward(fft_fwd_spec, fft_size, (CkFftComplex*) x, (CkFftComplex*) y);
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    if (verbose > 255) {
-      printf("FFT time          :  %g sec\n", elapsed_time);
-      printf("Time for copying  :  %g sec\n", copy_time);
-    }
-
-    elapsed_time -= copy_time;
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
-
-    PrintResult("Forward CkFFT FFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("FFT Actual:\n");
-      DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
-      printf("FFT Expected:\n");
-      DumpArrayComplexFloat("true", fft_size, (OMX_FC32*) y_true);
-    }
-  }
-
-  if (do_inverse_test) {
-    float scale = 1.0 / fft_size;
-
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      int m;
-      
-      memcpy(z, y_true, sizeof(*z) * fft_size);
-      CkFftComplexInverse(fft_inv_spec, fft_size, (CkFftComplex*) y, (CkFftComplex*) z);
-
-      // CkFftComplexInverse doesn't scale the inverse by 1/N, so we
-      // need to do it since the other FFTs do.
-      for (m = 0; m < fft_size; ++m) {
-        z[m].Re *= scale;
-        z[m].Im *= scale;
-      }
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    if (verbose > 255) {
-      printf("FFT time          :  %g sec\n", elapsed_time);
-      printf("Time for copying  :  %g sec\n", copy_time);
-    }
-
-    elapsed_time -= copy_time;
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
-
-    PrintResult("Inverse CkFFT FFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("IFFT Actual:\n");
-      DumpArrayComplexFloat("z", fft_size, z);
-      printf("IFFT Expected:\n");
-      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
-    }
-  }
-
-  FreeAlignedPointer(x_aligned);
-  FreeAlignedPointer(y_aligned);
-  FreeAlignedPointer(z_aligned);
-  free(y_true);
-  free(fft_fwd_spec);
-  free(fft_inv_spec);
-}
-
-void TimeCkFFTFFT(int count, float signal_value, int signal_type) {
-  int k;
-
-  if (verbose == 0)
-    printf("%s CkFFT FFT\n", do_forward_test ? "Forward" : "Inverse");
-  
-  for (k = min_fft_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k);
-    TimeOneCkFFTFFT(testCount, k, signal_value, signal_type);
-  }
-}
-
-#if 0
-void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
-                      int signal_type) {
-  OMX_F32* x;                   /* Source */
-  OMX_F32* y;                   /* Transform */
-  OMX_F32* z;                   /* Inverse transform */
-
-  OMX_F32* y_true;              /* True FFT */
-
-  struct AlignedPtr* x_aligned;
-  struct AlignedPtr* y_aligned;
-  struct AlignedPtr* z_aligned;
-
-
-  int n;
-  RDFTContext* fft_fwd_spec;
-  RDFTContext* fft_inv_spec;
-  int fft_size;
-  struct timeval start_time;
-  struct timeval end_time;
-  double elapsed_time;
-  double copy_time = 0.0;
-
-  fft_size = 1 << fft_log_size;
-
-  x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
-  /* The transformed value is in CCS format and is has fft_size + 2 values */
-  y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
-  z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
-
-  x = x_aligned->aligned_pointer_;
-  y = y_aligned->aligned_pointer_;
-  z = z_aligned->aligned_pointer_;
-
-  y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
-
-  GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
-                          signal_value);
-
-  fft_fwd_spec = av_rdft_init(fft_log_size, DFT_R2C);
-  fft_inv_spec = av_rdft_init(fft_log_size, IDFT_C2R);
-
-  if (!fft_fwd_spec || !fft_inv_spec) {
-    fprintf(stderr, "TimeOneCkFFTRFFT:  Could not initialize structures for order %d\n",
-            fft_log_size);
-    return;
-  }
-
-  if (do_forward_test) {
-    /*
-     * Measure how much time we spend doing copies, so we can subtract
-     * them from the elapsed time for the FFTs.
-     */
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(y, x, sizeof(*y) * fft_size);
-    }
-    GetUserTime(&end_time);
-    copy_time = TimeDifference(&start_time, &end_time);
-
-    
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(y, x, sizeof(*y) * fft_size);
-      av_rdft_calc(fft_fwd_spec, (FFTSample*) y);
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    if (verbose > 255) {
-      printf("FFT time          :  %g sec\n", elapsed_time);
-      printf("Time for copying  :  %g sec\n", copy_time);
-    }
-
-    elapsed_time -= copy_time;
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
-
-    PrintResult("Forward CkFFT RFFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      OMX_FC32* fft = (OMX_FC32*) y;
-      printf("FFT Actual (FFMPEG packed format):\n");
-      DumpArrayComplexFloat("y", fft_size / 2, fft);
-      printf("FFT Expected:\n");
-      DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
-    }
-  }
-
-  if (do_inverse_test) {
-    float scale = 2.0 / fft_size;
-    FFTSample* true = (FFTSample*) malloc(sizeof(*true) * (fft_size + 2));
-
-    /* Copy y_true to true, but arrange the values according to what rdft wants. */
-
-    memcpy(true, y_true, sizeof(FFTSample*) * fft_size);
-    true[1] = y_true[fft_size / 2];
-
-    /*
-     * Measure how much time we spend doing copies, so we can subtract
-     * them from the elapsed time for the FFTs.
-     */
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      memcpy(z, true, sizeof(*z) * fft_size);
-    }
-    GetUserTime(&end_time);
-    copy_time = TimeDifference(&start_time, &end_time);
-
-    GetUserTime(&start_time);
-    for (n = 0; n < count; ++n) {
-      int m;
-      
-      memcpy(z, true, sizeof(*z) * fft_size);
-      av_rdft_calc(fft_inv_spec, (FFTSample*) z);
-
-      for (m = 0; m < fft_size; ++m) {
-        z[m] *= scale;
-      }
-    }
-    GetUserTime(&end_time);
-
-    elapsed_time = TimeDifference(&start_time, &end_time);
-
-    if (verbose > 255) {
-      printf("IFFT time          :  %g sec\n", elapsed_time);
-      printf("Time for copying   :  %g sec\n", copy_time);
-    }
-
-    elapsed_time -= copy_time;
-
-    if (verbose > 255)
-      printf("Effective IFFT time:  %g sec\n", elapsed_time);
-
-    PrintResult("Inverse CkFFT RFFT", fft_log_size, elapsed_time, count);
-    if (verbose >= 255) {
-      printf("IFFT Actual:\n");
-      DumpArrayFloat("z", fft_size, z);
-      printf("IFFT Expected:\n");
-      DumpArrayFloat("x", fft_size, x);
-    }
-  }
-
-  FreeAlignedPointer(x_aligned);
-  FreeAlignedPointer(y_aligned);
-  FreeAlignedPointer(z_aligned);
-  free(fft_fwd_spec);
-  free(fft_inv_spec);
-}
-
-void TimeCkFFTRFFT(int count, float signal_value, int signal_type) {
-  int k;
-  int min_order;
-
-  if (verbose == 0)
-    printf("%s CkFFT RFFT\n", do_forward_test ? "Forward" : "Inverse");
-  
-  /* The minimum FFT order for rdft is 4. */
-
-  min_order = min_fft_order < 4 ? 4 : min_fft_order;
-  
-  for (k = min_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k);
-    TimeOneCkFFTRFFT(testCount, k, signal_value, signal_type);
-  }
-}
-#endif
 #endif
