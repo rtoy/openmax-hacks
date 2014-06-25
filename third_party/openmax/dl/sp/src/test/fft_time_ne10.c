@@ -70,9 +70,7 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
     for (n = 0; n < count; ++n) {
       ne10_fft_c2c_1d_float32_neon((ne10_fft_cpx_float32_t *) y,
                                    (ne10_fft_cpx_float32_t *) x,
-                                   fft_fwd_spec->twiddles,
-                                   fft_fwd_spec->factors,
-                                   fft_size,
+                                   fft_fwd_spec,
                                    0);
     }
     GetUserTime(&end_time);
@@ -100,9 +98,7 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
       // incorrectly.
       ne10_fft_c2c_1d_float32_neon((ne10_fft_cpx_float32_t *) z,
                                    (ne10_fft_cpx_float32_t *) y,
-                                   fft_fwd_spec->twiddles,
-                                   fft_fwd_spec->factors,
-                                   fft_size,
+                                   fft_fwd_spec,
                                    1);
       {
         int k;
@@ -203,10 +199,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
     for (n = 0; n < count; ++n) {
       ne10_fft_r2c_1d_float32_neon((ne10_fft_cpx_float32_t *) y,
                                    x,
-                                   fft_fwd_spec->twiddles,
-                                   fft_fwd_spec->super_twiddles,
-                                   fft_fwd_spec->factors,
-                                   fft_size);
+                                   fft_fwd_spec);
     }
     GetUserTime(&end_time);
 
@@ -230,10 +223,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
       // The inverse appears not to be working.
       ne10_fft_c2r_1d_float32_neon(z,
                                    (ne10_fft_cpx_float32_t *) y,
-                                   fft_fwd_spec->twiddles,
-                                   fft_fwd_spec->super_twiddles,
-                                   fft_fwd_spec->factors,
-                                   fft_size);
+                                   fft_fwd_spec);
       {
         int k;
         float scale = 1.0 / fft_size;
