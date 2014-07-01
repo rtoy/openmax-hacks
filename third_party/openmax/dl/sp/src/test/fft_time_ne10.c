@@ -166,6 +166,8 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
 
   fft_size = 1 << fft_log_size;
 #if 0
@@ -206,7 +208,12 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size / 2 + 1);
+    
     PrintResult("Forward NE10 RFFT", fft_log_size, elapsed_time, count);
+    if (verbose > 0)
+      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+
     if (verbose >= 255) {
       printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size / 2 + 1, y);
@@ -223,21 +230,31 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
       //memcpy(y, y_true, (fft_size >> 1) * sizeof(*y));
       // The inverse appears not to be working.
       ne10_fft_c2r_1d_float32_neon(z,
-                                   (ne10_fft_cpx_float32_t *) y,
+                                   (ne10_fft_cpx_float32_t *) y_true,
                                    fft_fwd_spec);
-      {
-        int k;
-        float scale = 1.0 / fft_size;
-        for (k = 0; k < fft_size; ++k) {
-          z[k] *= scale;
-        }
-      }
     }
     GetUserTime(&end_time);
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+#if 1
+    // This is surely a bug in the inverse real FFT. It's off by a
+    // factor of 2. Don't include the cost of this scaling in the
+    // timing for now.
+    {
+      int k;
+      float scale = 0.5;
+      for (k = 0; k < fft_size; ++k) {
+        z[k] *= scale;
+      }
+    }
+#endif
+    CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
+
     PrintResult("Inverse NE10 RFFT", fft_log_size, elapsed_time, count);
+    if (verbose > 0)
+      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
       DumpArrayFloat("z", fft_size, z);
