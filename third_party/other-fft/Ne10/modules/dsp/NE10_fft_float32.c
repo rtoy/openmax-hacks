@@ -1039,6 +1039,9 @@ ne10_fft_cfg_float32_t ne10_fft_alloc_c2c_float32 (ne10_int32_t nfft)
                               + sizeof (ne10_fft_cpx_float32_t) * nfft        /* buffer*/
                               + NE10_FFT_BYTE_ALIGNMENT;     /* 64-bit alignment*/
 
+    if (nfft < 4)
+        return NULL;
+
     st = (ne10_fft_cfg_float32_t) NE10_MALLOC (memneeded);
 
     if (st)
@@ -1054,7 +1057,7 @@ ne10_fft_cfg_float32_t ne10_fft_alloc_c2c_float32 (ne10_int32_t nfft)
         if (result == NE10_ERR)
         {
             NE10_FREE (st);
-            return st;
+            return NULL;
         }
 
         ne10_int32_t i, j;
@@ -1221,6 +1224,9 @@ ne10_fft_r2c_cfg_float32_t ne10_fft_alloc_r2c_float32 (ne10_int32_t nfft)
                               + sizeof (ne10_fft_cpx_float32_t) * nfft        /* buffer*/
                               + NE10_FFT_BYTE_ALIGNMENT;     /* 64-bit alignment*/
 
+    if (nfft < 8)
+        return NULL;
+    
     st = (ne10_fft_r2c_cfg_float32_t) NE10_MALLOC (memneeded);
 
     if (st)
@@ -1237,7 +1243,7 @@ ne10_fft_r2c_cfg_float32_t ne10_fft_alloc_r2c_float32 (ne10_int32_t nfft)
         if (result == NE10_ERR)
         {
             NE10_FREE (st);
-            return st;
+            return NULL;
         }
 
         ne10_int32_t i, j;
