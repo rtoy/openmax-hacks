@@ -237,18 +237,6 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-#if 1
-    // This is surely a bug in the inverse real FFT. It's off by a
-    // factor of 2. Don't include the cost of this scaling in the
-    // timing for now.
-    {
-      int k;
-      float scale = 0.5;
-      for (k = 0; k < fft_size; ++k) {
-        z[k] *= scale;
-      }
-    }
-#endif
     CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
 
     PrintResult("Inverse NE10 RFFT", fft_log_size, elapsed_time, count);
