@@ -134,6 +134,7 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
 void TimeNE10FFT(int count, float signal_value, int signal_type) {
   int k;
+  int min_order = min_fft_order >= 2 ? min_fft_order : 2;
 
   if (verbose == 0)
     printf("%s NE10 FFT\n", do_forward_test ? "Forward" : "Inverse");
@@ -259,12 +260,13 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
 void TimeNE10RFFT(int count, float signal_value, int signal_type) {
   int k;
+  int min_order = min_fft_order >= 3 ? min_fft_order : 3;
 
   if (verbose == 0)
     printf("%s NE10 RFFT\n", do_forward_test ? "Forward" : "Inverse");
   
   // The NE10 RFFT routine currently only supports sizes 128, 512, 2048. (Order 7, 9, 11)
-  for (k = min_fft_order; k <= max_fft_order; k++) {
+  for (k = min_order; k <= max_fft_order; k++) {
     int testCount = ComputeCount(count, k);
     TimeOneNE10RFFT(testCount, k, signal_value, signal_type);
   }
