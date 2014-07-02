@@ -41,7 +41,7 @@
         'Ne10/inc/NE10_macros.h',
         'Ne10/modules/dsp/NE10_fft.h',
         'Ne10/modules/dsp/NE10_fft_float32.c',
-        'Ne10/modules/dsp/NE10_fft_float32.neonintrinsic.c',
+        'Ne10/modules/dsp/NE10_fft_float32.neon.c',
         'Ne10/modules/dsp/NE10_fft_float32.neon_s.s',
       ],
   }],
