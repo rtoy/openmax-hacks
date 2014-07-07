@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#if defined(__arm__) || defined(__aarch64__)
+#include <arm_neon.h>
+#endif
 
 #include "dl/sp/api/armSP.h"
 #include "dl/sp/api/omxSP.h"
@@ -145,6 +148,45 @@ void TimePfFFT(int count, float signal_value, int signal_type) {
   }
 }
 
+/*
+ * Scale FFT data by 1/|length|. |length| must be a power of two
+ */
+static inline ScaleRFFTData(OMX_F32* fftData, unsigned length) {
+#if defined(__arm__) || defined(__aarch64__)
+  float32_t* data = (float32_t*)fftData;
+  float32_t scale = 1.0f / length;
+
+  if (length >= 4) {
+    /*
+     * Do 4 float elements at a time because |length| is always a
+     * multiple of 4 when |length| >= 4.
+     *
+     * TODO(rtoy): Figure out how to process 8 elements at a time
+     * using intrinsics or replace this with inline assembly.
+     */
+    do {
+      float32x4_t x = vld1q_f32(data);
+
+      length -= 4;
+      x = vmulq_n_f32(x, scale);
+      vst1q_f32(data, x);
+      data += 4;
+    } while (length > 0);
+  } else if (length == 2) {
+    float32x2_t x = vld1_f32(data);
+    x = vmul_n_f32(x, scale);
+    vst1_f32(data, x);
+  } else {
+    fftData[0] *= scale;
+  }
+#else
+  float scale = 1.0f / length;
+  for (m = 0; m < length; ++m) {
+      fft_data[m] *= scale;
+  }
+#endif
+}
+
 void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
                      int signal_type) {
   struct AlignedPtr* x_aligned;
@@ -153,10 +195,10 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
 
   float* x;
   struct ComplexFloat* y;
-  OMX_FC32* z;
+  OMX_F32* z;
 
   float* y_true;
-  float* true;
+  float* y_tmp;
 
   int n;
   int fft_size;
@@ -172,7 +214,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
   z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
 
   y_true = (float*) malloc(sizeof(*y_true) * 2 * fft_size);
-  true = (float*) malloc(sizeof(*true) * (fft_size + 2));
+  y_tmp = (float*) malloc(sizeof(*y_tmp) * (fft_size + 2));
 
   x = x_aligned->aligned_pointer_;
   y = y_aligned->aligned_pointer_;
@@ -216,21 +258,18 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
 
     /* Copy y_true to true, but arrange the values according to what rdft wants. */
 
-    memcpy(true, y_true, sizeof(float*) * fft_size);
-    true[1] = y_true[fft_size / 2];
+    memcpy(y_tmp, y_true, sizeof(y_tmp[0]) * fft_size);
+    y_tmp[1] = y_true[fft_size / 2];
 
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       int m;
       
-      pffft_transform_ordered(s, (float*)y, (float*)z, NULL, PFFFT_BACKWARD);
+      pffft_transform_ordered(s, (float*)y_tmp, (float*)z, NULL, PFFFT_BACKWARD);
       /*
        * Need to include cost of scaling the inverse
        */
-      for (m = 0; m < fft_size; ++m) {
-        z[m].Re *= scale;
-        z[m].Im *= scale;
-      }
+      ScaleRFFTData(z, fft_size);
     }
     GetUserTime(&end_time);
 
@@ -246,9 +285,9 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
     PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
-      DumpArrayComplexFloat("z", fft_size, z);
+      DumpArrayFloat("z", fft_size, z);
       printf("IFFT Expected:\n");
-      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
+      DumpArrayFloat("x", fft_size, x);
     }
   }
 
@@ -257,7 +296,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
   FreeAlignedPointer(z_aligned);
   pffft_destroy_setup(s);
   free(y_true);
-  free(true);
+  free(y_tmp);
 }
 
 void TimePfRFFT(int count, float signal_value, int signal_type) {
