@@ -30,6 +30,11 @@
       'test_utilities'
     ],
     'conditions': [
+      ['target_arch == "arm64"', {
+        'defines': [
+          'FLOAT_ONLY',
+        ],
+      }],
       ['big_float_fft == 1', {
         'defines': [
           'BIG_FFT_TABLE',
