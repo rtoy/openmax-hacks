@@ -8,14 +8,6 @@
         'Ne10/inc',
         'Ne10/common',
       ],
-      'cflags!': [
-        '-mfpu=vfpv3-d16',
-      ],
-      'cflags': [
-        # We enable Neon instructions even with arm_neon==0, to support
-        # runtime detection.
-        '-mfpu=neon',
-      ],
       'defines': [
         '__ARM_HAVE_NEON',
         'HAVE_NE10',
@@ -41,8 +33,27 @@
         'Ne10/inc/NE10_macros.h',
         'Ne10/modules/dsp/NE10_fft.h',
         'Ne10/modules/dsp/NE10_fft_float32.c',
-        'Ne10/modules/dsp/NE10_fft_float32.neon.c',
-        'Ne10/modules/dsp/NE10_fft_float32.neon_s.s',
+      ],
+      'conditions' : [
+        ['target_arch=="arm"', {
+          'sources' : [
+            'Ne10/modules/dsp/NE10_fft_float32.neon.c',
+            'Ne10/modules/dsp/NE10_fft_float32.neon_s.s',
+          ],
+          'cflags!': [
+            '-mfpu=vfpv3-d16',
+          ],
+          'cflags': [
+            # We enable Neon instructions even with arm_neon==0, to support
+            # runtime detection.
+            '-mfpu=neon',
+          ],
+        }],
+        ['target_arch=="arm64"', {
+          'sources' : [
+            'Ne10/modules/dsp/NE10_fft_float32.neonintrinsic.c',
+          ],
+        }],
       ],
   }],
 }
