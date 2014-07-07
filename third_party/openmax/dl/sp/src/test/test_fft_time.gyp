@@ -76,6 +76,19 @@
         'defines': [
           'HAVE_PFFFT',
         ],
+        'conditions': [
+          ['target_arch == "arm"', {
+            # fft_time_pffft.c needs Neon
+            'cflags!': [
+              '-mfpu=vfpv3-d16',
+            ],
+            'cflags': [
+              # We enable Neon instructions even with arm_neon==0, to support
+              # runtime detection.
+              '-mfpu=neon',
+            ],
+          }],
+        ],
         'dependencies' : [
           '../../../../../other-fft/pffft.gyp:pffft'
         ],
