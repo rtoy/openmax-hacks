@@ -22,6 +22,45 @@ extern int do_inverse_test;
 extern int min_fft_order;
 extern int max_fft_order;
 
+/*
+ * Scale FFT data by 1/|length|. |length| must be a power of two
+ */
+static inline ScaleVector(OMX_F32* vectorData, unsigned length) {
+#if defined(__arm__) || defined(__aarch64__)
+  float32_t* data = (float32_t*)vectorData;
+  float32_t scale = 1.0f / length;
+
+  if (length >= 4) {
+    /*
+     * Do 4 float elements at a time because |length| is always a
+     * multiple of 4 when |length| >= 4.
+     *
+     * TODO(rtoy): Figure out how to process 8 elements at a time
+     * using intrinsics or replace this with inline assembly.
+     */
+    do {
+      float32x4_t x = vld1q_f32(data);
+
+      length -= 4;
+      x = vmulq_n_f32(x, scale);
+      vst1q_f32(data, x);
+      data += 4;
+    } while (length > 0);
+  } else if (length == 2) {
+    float32x2_t x = vld1_f32(data);
+    x = vmul_n_f32(x, scale);
+    vst1_f32(data, x);
+  } else {
+    vectorData[0] *= scale;
+  }
+#else
+  float scale = 1.0f / length;
+  for (m = 0; m < length; ++m) {
+      vectorData[m] *= scale;
+  }
+#endif
+}
+
 void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
                      int signal_type) {
   struct AlignedPtr* x_aligned;
@@ -98,10 +137,7 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
       /*
        * Need to include cost of scaling the inverse
        */
-      for (m = 0; m < fft_size; ++m) {
-        z[m].Re *= scale;
-        z[m].Im *= scale;
-      }
+      ScaleVector((OMX_F32*) z, 2 * fft_size);
     }
     GetUserTime(&end_time);
 
@@ -146,45 +182,6 @@ void TimePfFFT(int count, float signal_value, int signal_type) {
     int testCount = ComputeCount(count, k);
     TimeOnePfFFT(testCount, k, signal_value, signal_type);
   }
-}
-
-/*
- * Scale FFT data by 1/|length|. |length| must be a power of two
- */
-static inline ScaleRFFTData(OMX_F32* fftData, unsigned length) {
-#if defined(__arm__) || defined(__aarch64__)
-  float32_t* data = (float32_t*)fftData;
-  float32_t scale = 1.0f / length;
-
-  if (length >= 4) {
-    /*
-     * Do 4 float elements at a time because |length| is always a
-     * multiple of 4 when |length| >= 4.
-     *
-     * TODO(rtoy): Figure out how to process 8 elements at a time
-     * using intrinsics or replace this with inline assembly.
-     */
-    do {
-      float32x4_t x = vld1q_f32(data);
-
-      length -= 4;
-      x = vmulq_n_f32(x, scale);
-      vst1q_f32(data, x);
-      data += 4;
-    } while (length > 0);
-  } else if (length == 2) {
-    float32x2_t x = vld1_f32(data);
-    x = vmul_n_f32(x, scale);
-    vst1_f32(data, x);
-  } else {
-    fftData[0] *= scale;
-  }
-#else
-  float scale = 1.0f / length;
-  for (m = 0; m < length; ++m) {
-      fft_data[m] *= scale;
-  }
-#endif
 }
 
 void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
@@ -269,7 +266,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
       /*
        * Need to include cost of scaling the inverse
        */
-      ScaleRFFTData(z, fft_size);
+      ScaleVector(z, fft_size);
     }
     GetUserTime(&end_time);
 
