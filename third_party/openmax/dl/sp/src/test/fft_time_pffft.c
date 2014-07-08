@@ -23,12 +23,12 @@ extern int min_fft_order;
 extern int max_fft_order;
 
 /*
- * Scale FFT data by 1/|length|. |length| must be a power of two
+ * Scale FFT data by 1/|fftSize|. |length| is the length of the vector.
  */
-static inline ScaleVector(OMX_F32* vectorData, unsigned length) {
+static inline ScaleVector(OMX_F32* vectorData, unsigned length, unsigned fftSize) {
 #if defined(__arm__) || defined(__aarch64__)
   float32_t* data = (float32_t*)vectorData;
-  float32_t scale = 1.0f / length;
+  float32_t scale = 1.0f / fftSize;
 
   if (length >= 4) {
     /*
@@ -54,7 +54,7 @@ static inline ScaleVector(OMX_F32* vectorData, unsigned length) {
     vectorData[0] *= scale;
   }
 #else
-  float scale = 1.0f / length;
+  float scale = 1.0f / fftSize;
   for (m = 0; m < length; ++m) {
       vectorData[m] *= scale;
   }
@@ -79,6 +79,8 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
   struct timeval end_time;
   double elapsed_time;
   PFFFT_Setup *s;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
   
   fft_size = 1 << fft_log_size;
 
@@ -109,14 +111,13 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    if (verbose > 255) {
-      printf("FFT time          :  %g sec\n", elapsed_time);
-    }
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
+    CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size);
 
     PrintResult("Forward PFFFT FFT", fft_log_size, elapsed_time, count);
+
+    if (verbose > 0)
+      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+
     if (verbose >= 255) {
       printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
@@ -137,20 +138,19 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
       /*
        * Need to include cost of scaling the inverse
        */
-      ScaleVector((OMX_F32*) z, 2 * fft_size);
+      ScaleVector((OMX_F32*) z, 2 * fft_size, fft_size);
     }
     GetUserTime(&end_time);
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    if (verbose > 255) {
-      printf("FFT time          :  %g sec\n", elapsed_time);
-    }
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
+    CompareComplexFloat(&snr_inverse, (OMX_FC32*) z, (OMX_FC32*) x, fft_size);
 
     PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count);
+
+    if (verbose > 0) 
+      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
       DumpArrayComplexFloat("z", fft_size, z);
@@ -203,6 +203,8 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
   struct timeval end_time;
   double elapsed_time;
   PFFFT_Setup *s;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
   
   fft_size = 1 << fft_log_size;
 
@@ -234,14 +236,13 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    if (verbose > 255) {
-      printf("FFT time          :  %g sec\n", elapsed_time);
-    }
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
+    CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size / 2 + 1);
 
     PrintResult("Forward PFFFT FFT", fft_log_size, elapsed_time, count);
+
+    if (verbose > 0)
+      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+
     if (verbose >= 255) {
       printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size / 2, (OMX_FC32*) y);
@@ -266,20 +267,18 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
       /*
        * Need to include cost of scaling the inverse
        */
-      ScaleVector(z, fft_size);
+      ScaleVector(z, fft_size, fft_size);
     }
     GetUserTime(&end_time);
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    if (verbose > 255) {
-      printf("FFT time          :  %g sec\n", elapsed_time);
-    }
-
-    if (verbose > 255)
-      printf("Effective FFT time:  %g sec\n", elapsed_time);
+    CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
 
     PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count);
+    if (verbose > 0)
+      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
       DumpArrayFloat("z", fft_size, z);
