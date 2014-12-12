@@ -136,23 +136,23 @@ void TimeFFTUsage(char* prog) {
       "              5 - Real 32-bit\n"
 #endif
 #if defined(HAVE_KISSFFT)
-      "	             6 - KissFFT (complex)\n"
+      "              6 - KissFFT (complex)\n"
 #endif
 #if defined(HAVE_NE10)
-      "	             7 - NE10 complex float\n"
-      "	             8 - NE10 real float\n"
+      "              7 - NE10 complex float\n"
+      "              8 - NE10 real float\n"
 #endif
 #if defined(HAVE_FFMPEG)
-      "	             9 - FFmpeg complex float\n"
-      "	             10 - FFmpeg real float\n"
+      "              9 - FFmpeg complex float\n"
+      "              10 - FFmpeg real float\n"
 #endif
 #if defined(HAVE_CKFFT)
-      "	             11 - Cricket FFT complex float\n"
-      "	             12 - Cricket FFT real float\n"
+      "              11 - Cricket FFT complex float\n"
+      "              12 - Cricket FFT real float\n"
 #endif
 #if defined(HAVE_PFFFT)
-      "	             13 - PFFFT complex float\n"
-      "	             14 - PFFFT real float\n"
+      "              13 - PFFFT complex float\n"
+      "              14 - PFFFT real float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -162,7 +162,7 @@ void TimeFFTUsage(char* prog) {
       "              1 - Real ramp starting at S/N, N = FFT size\n"
       "              2 - Sine wave of amplitude S\n"
       "              3 - Complex signal whose transform is a sine wave.\n"
-      "  -O          Only run the float FFTs"
+      "  -O          Only run the float FFTs\n"
       "  -t          Run full set of timing tests for the specified FFT"
       "\n"
       "Use -v 0 in combination with -F or -I to get output that can\n"
