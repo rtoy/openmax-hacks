@@ -38,7 +38,7 @@
         ['target_arch=="arm"', {
           'sources' : [
             'Ne10/modules/dsp/NE10_fft_float32.neon.c',
-            'Ne10/modules/dsp/NE10_fft_float32.neon_s.s',
+            'Ne10/modules/dsp/NE10_fft_float32.neon_s.S',
           ],
           'cflags!': [
             '-mfpu=vfpv3-d16',
