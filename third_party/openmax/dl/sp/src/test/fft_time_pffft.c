@@ -25,7 +25,7 @@ extern int max_fft_order;
 /*
  * Scale FFT data by 1/|fftSize|. |length| is the length of the vector.
  */
-static inline ScaleVector(OMX_F32* vectorData, unsigned length, unsigned fftSize) {
+static inline void ScaleVector(OMX_F32* vectorData, unsigned length, unsigned fftSize) {
 #if defined(__arm__) || defined(__aarch64__)
   float32_t* data = (float32_t*)vectorData;
   float32_t scale = 1.0f / fftSize;
@@ -113,7 +113,7 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size);
 
-    PrintResult("Forward PFFFT FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Forward PFFFT FFT", fft_log_size, elapsed_time, count, verbose);
 
     if (verbose > 0)
       printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
@@ -146,7 +146,7 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_inverse, (OMX_FC32*) z, (OMX_FC32*) x, fft_size);
 
-    PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count, verbose);
 
     if (verbose > 0) 
       printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
@@ -179,7 +179,7 @@ void TimePfFFT(int count, float signal_value, int signal_type) {
   min_order = min_fft_order < 4 ? 4 : min_fft_order;
   
   for (k = min_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k);
+    int testCount = ComputeCount(count, k, adapt_count);
     TimeOnePfFFT(testCount, k, signal_value, signal_type);
   }
 }
@@ -238,7 +238,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size / 2 + 1);
 
-    PrintResult("Forward PFFFT FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Forward PFFFT FFT", fft_log_size, elapsed_time, count, verbose);
 
     if (verbose > 0)
       printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
@@ -275,7 +275,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
 
     CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
 
-    PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count, verbose);
     if (verbose > 0)
       printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
 
@@ -308,7 +308,7 @@ void TimePfRFFT(int count, float signal_value, int signal_type) {
   min_order = min_fft_order < 5 ? 5 : min_fft_order;
   
   for (k = min_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k);
+    int testCount = ComputeCount(count, k, adapt_count);
     TimeOnePfRFFT(testCount, k, signal_value, signal_type);
   }
 }

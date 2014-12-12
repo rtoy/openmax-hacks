@@ -65,7 +65,7 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count, verbose);
     if (verbose >= 255) {
       printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
@@ -92,7 +92,7 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count, verbose);
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
       DumpArrayComplexFloat("z", fft_size, (OMX_FC32*) z);
@@ -117,7 +117,7 @@ void TimeKissFFT(int count, float signal_value, int signal_type) {
     printf("%s Kiss FFT\n", do_forward_test ? "Forward" : "Inverse");
   
   for (k = min_fft_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k);
+    int testCount = ComputeCount(count, k, adapt_count);
     TimeOneKissFFT(testCount, k, signal_value, signal_type);
   }
 }
