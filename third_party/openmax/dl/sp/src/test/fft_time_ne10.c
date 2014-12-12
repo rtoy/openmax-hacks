@@ -81,7 +81,7 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size);
 
-    PrintResult("Forward NE10 FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Forward NE10 FFT", fft_log_size, elapsed_time, count, verbose);
 
     if (verbose > 0)
       printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
@@ -110,7 +110,7 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_inverse, (OMX_FC32*) z, (OMX_FC32*) x, fft_size);
 
-    PrintResult("Inverse NE10 FFT", fft_log_size, elapsed_time, count);
+    PrintResult("Inverse NE10 FFT", fft_log_size, elapsed_time, count, verbose);
 
     if (verbose > 0) 
       printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
@@ -141,7 +141,7 @@ void TimeNE10FFT(int count, float signal_value, int signal_type) {
   
   // Currently, NE10 only supports sizes 16, 64, 256, and 1024 (Order 4, 6, 8, 10).
   for (k = min_fft_order; k <= max_fft_order; k++) {
-    int testCount = ComputeCount(count, k);
+    int testCount = ComputeCount(count, k, adapt_count);
     TimeOneNE10FFT(testCount, k, signal_value, signal_type);
   }
 }
@@ -211,7 +211,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size / 2 + 1);
     
-    PrintResult("Forward NE10 RFFT", fft_log_size, elapsed_time, count);
+    PrintResult("Forward NE10 RFFT", fft_log_size, elapsed_time, count, verbose);
     if (verbose > 0)
       printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
 
@@ -240,7 +240,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
 
     CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
 
-    PrintResult("Inverse NE10 RFFT", fft_log_size, elapsed_time, count);
+    PrintResult("Inverse NE10 RFFT", fft_log_size, elapsed_time, count, verbose);
     if (verbose > 0)
       printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
 
@@ -267,7 +267,7 @@ void TimeNE10RFFT(int count, float signal_value, int signal_type) {
   
   // The NE10 RFFT routine currently only supports sizes 128, 512, 2048. (Order 7, 9, 11)
   for (k = min_order; k <= max_fft_order; k++) {
-    int testCount = ComputeCount(count, k);
+    int testCount = ComputeCount(count, k, adapt_count);
     TimeOneNE10RFFT(testCount, k, signal_value, signal_type);
   }
 }
