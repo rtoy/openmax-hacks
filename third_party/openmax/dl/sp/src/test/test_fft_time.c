@@ -679,11 +679,11 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
       GetUserTime(&start_time);
       for (k = 0; k < count; ++k) {
         for (n = 0; n < fft_size; ++n) {
-          if (fabs(x[n].Re) > factor) {
-            factor = fabs(x[n].Re);
+          if (abs(x[n].Re) > factor) {
+            factor = abs(x[n].Re);
           }
-          if (fabs(x[n].Im) > factor) {
-            factor = fabs(x[n].Im);
+          if (abs(x[n].Im) > factor) {
+            factor = abs(x[n].Im);
           }
         }
 
@@ -723,11 +723,11 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
       GetUserTime(&start_time);
       for (k = 0; k < count; ++k) {
         for (n = 0; n < fft_size; ++n) {
-          if (fabs(x[n].Re) > factor) {
-            factor = fabs(x[n].Re);
+          if (abs(x[n].Re) > factor) {
+            factor = abs(x[n].Re);
           }
-          if (fabs(x[n].Im) > factor) {
-            factor = fabs(x[n].Im);
+          if (abs(x[n].Im) > factor) {
+            factor = abs(x[n].Im);
           }
         }
         factor = ((1 << 18) - 1) / factor;
@@ -861,11 +861,11 @@ void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
       GetUserTime(&start_time);
       for (k = 0; k < count; ++k) {
         for (n = 0; n < fft_size; ++n) {
-          if (fabs(x[n].Re) > factor) {
-            factor = fabs(x[n].Re);
+          if (abs(x[n].Re) > factor) {
+            factor = abs(x[n].Re);
           }
-          if (fabs(x[n].Im) > factor) {
-            factor = fabs(x[n].Im);
+          if (abs(x[n].Im) > factor) {
+            factor = abs(x[n].Im);
           }
         }
 
@@ -905,11 +905,11 @@ void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
       GetUserTime(&start_time);
       for (k = 0; k < count; ++k) {
         for (n = 0; n < fft_size; ++n) {
-          if (fabs(x[n].Re) > factor) {
-            factor = fabs(x[n].Re);
+          if (abs(x[n].Re) > factor) {
+            factor = abs(x[n].Re);
           }
-          if (fabs(x[n].Im) > factor) {
-            factor = fabs(x[n].Im);
+          if (abs(x[n].Im) > factor) {
+            factor = abs(x[n].Im);
           }
         }
         factor = ((1 << 15) - 1) / factor;
