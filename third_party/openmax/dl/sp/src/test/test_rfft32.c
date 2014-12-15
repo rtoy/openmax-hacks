@@ -24,13 +24,11 @@
 int verbose;
 int signal_value;
 
-#define MAX_FFT_ORDER   12
-
 int main(int argc, char* argv[]) {
   struct Options options;
   struct TestInfo info;
 
-  SetDefaultOptions(&options, 1, MAX_FFT_ORDER);
+  SetDefaultOptions(&options, 1, MAX_FFT_ORDER_FIXED_POINT);
 
   ProcessCommandLine(&options, argc, argv,
                      "Test forward and inverse real 32-bit fixed-point FFT\n");

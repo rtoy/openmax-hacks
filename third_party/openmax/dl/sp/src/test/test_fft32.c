@@ -21,8 +21,6 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 
-#define MAX_FFT_ORDER   12
-
 int verbose;
 int signal_value;
 
@@ -30,7 +28,7 @@ int main(int argc, char* argv[]) {
   struct Options options;
   struct TestInfo info;
 
-  SetDefaultOptions(&options, 0, MAX_FFT_ORDER);
+  SetDefaultOptions(&options, 0, MAX_FFT_ORDER_FIXED_POINT);
 
   ProcessCommandLine(&options, argc, argv,
                      "Test forward and inverse 32-bit fixed-point FFT\n");
