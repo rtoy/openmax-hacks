@@ -1293,6 +1293,7 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
   int scaleFactor;
 
   fft_size = 1 << fft_log_size;
+  scaleFactor = fft_log_size;
 
   x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
