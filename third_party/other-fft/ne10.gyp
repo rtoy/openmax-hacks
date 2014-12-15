@@ -31,6 +31,7 @@
         #'Ne10/modules/dsp/NE10_rfft.neon.c',
         'Ne10/inc/NE10_types.h',
         'Ne10/inc/NE10_macros.h',
+        'Ne10/modules/dsp/NE10_fft.c',
         'Ne10/modules/dsp/NE10_fft.h',
         'Ne10/modules/dsp/NE10_fft_float32.c',
       ],
