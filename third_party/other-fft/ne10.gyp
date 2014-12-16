@@ -29,6 +29,7 @@
         #'Ne10/modules/dsp/NE10_rfft.c',
         #'Ne10/modules/dsp/NE10_rfft_init.c',
         #'Ne10/modules/dsp/NE10_rfft.neon.c',
+        'Ne10/inc/NE10_dsp.h',
         'Ne10/inc/NE10_types.h',
         'Ne10/inc/NE10_macros.h',
         'Ne10/modules/dsp/NE10_fft.c',
