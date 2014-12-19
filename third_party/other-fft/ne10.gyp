@@ -54,6 +54,8 @@
         ['target_arch=="arm64"', {
           'sources' : [
             'Ne10/modules/dsp/NE10_fft_float32.neonintrinsic.c',
+            'Ne10/modules/dsp/NE10_rfft_float32.c',
+            'Ne10/modules/dsp/NE10_rfft_float32.neonintrinsic.c',
           ],
         }],
       ],
