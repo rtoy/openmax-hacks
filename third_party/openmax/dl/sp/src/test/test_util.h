@@ -12,14 +12,8 @@
 #define WEBRTC_ARM_FFT_TEST_UTIL_H_
 
 #include <stdio.h>
-#include <sys/resource.h>
-#include <sys/time.h>
 
-#include "dl/api/omxtypes.h"
 #include "dl/sp/src/test/compare.h"
-
-#define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
-#define MAX_FFT_ORDER_FIXED_POINT 12
 
 /* Command line options */
 struct Options {
@@ -172,16 +166,4 @@ void DumpArrayComplex32(const char* array_name, int count,
 void DumpArrayFloat(const char* array_name, int count, const OMX_F32* array);
 void DumpArrayComplexFloat(const char* array_name, int count,
                            const OMX_FC32* array);
-void GetUserTime(struct timeval* time);
-double TimeDifference(const struct timeval * start,
-                      const struct timeval * end);
-
-void PrintResult(const char* prefix,
-                 int fft_log_size,
-                 double elapsed_time,
-                 int count,
-                 int verbose);
-int ComputeCount(int nominal_count,
-                 int fft_log_size,
-                 int adapt_count);
 #endif

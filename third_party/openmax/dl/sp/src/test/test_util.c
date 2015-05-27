@@ -214,7 +214,7 @@ void DumpArrayComplex32(const char* array_name, int count,
                         const OMX_SC32* array) {
   int n;
 
-  printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", array_name);
+  printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", array_name, array_name);
   for (n = 0; n < count; ++n) {
     printf("%4d\t%16d\t%16d\n", n, array[n].Re, array[n].Im);
   }
@@ -247,55 +247,4 @@ void DumpArrayComplexFloat(const char* array_name, int count,
   for (n = 0; n < count; ++n) {
     printf("%4d\t%16g\t%16g\n", n, array[n].Re, array[n].Im);
   }
-}
-
-void GetUserTime(struct timeval* time) {
-  struct rusage usage;
-  getrusage(RUSAGE_SELF, &usage);
-  memcpy(time, &usage.ru_utime, sizeof(*time));
-}
-
-double TimeDifference(const struct timeval * start,
-                      const struct timeval * end) {
-  double start_time;
-  double end_time;
-  start_time = start->tv_sec + start->tv_usec * 1e-6;
-  end_time = end->tv_sec + end->tv_usec * 1e-6;
-
-  return end_time - start_time;
-}
-
-void PrintResult(const char* prefix, int fft_log_size, double elapsed_time,
-                 int count, int verbose) {
-  if (verbose == 0) {
-    printf("%2d\t%8.4f\t%8d\t%.4e\n",
-           fft_log_size, elapsed_time, count, 1000 * elapsed_time / count);
-  } else {
-    printf("%-18s:  order %2d:  %8.4f sec for %8d FFTs:  %.4e msec/FFT\n",
-           prefix, fft_log_size, elapsed_time, count,
-           1000 * elapsed_time / count);
-  }
-}
-
-int ComputeCount(int nominal_count, int fft_log_size, int adapt_count) {
-  /*
-   * Try to figure out how many repetitions to do for a given FFT
-   * order (fft_log_size) given that we want a repetition of
-   * nominal_count for order 15 FFTs to be the approsimate amount of
-   * time we want to for all tests.
-   */
-
-  int count;
-  if (adapt_count) {
-    double maxTime = ((double) nominal_count) * (1 << MAX_FFT_ORDER)
-        * MAX_FFT_ORDER;
-    double c = maxTime / ((1 << fft_log_size) * fft_log_size);
-    const int max_count = 10000000;
-
-    count = (c > max_count) ? max_count : c;
-  } else {
-    count = nominal_count;
-  }
-
-  return count;
 }

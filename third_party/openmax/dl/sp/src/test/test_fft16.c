@@ -21,6 +21,8 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 
+#define MAX_FFT_ORDER   12
+
 int verbose = 0;
 int signal_value = 32767;
 int scale_factor = 0;
@@ -50,7 +52,7 @@ int main(int argc, char* argv[]) {
   struct Options options;
   struct TestInfo info;
 
-  SetDefaultOptions(&options, 0, MAX_FFT_ORDER_FIXED_POINT);
+  SetDefaultOptions(&options, 0, MAX_FFT_ORDER);
 
   options.signal_value_ = signal_value;
   options.scale_factor_ = scale_factor;

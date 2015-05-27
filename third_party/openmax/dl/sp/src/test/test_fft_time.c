@@ -11,6 +11,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include "dl/sp/api/armSP.h"
@@ -19,12 +22,8 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 
-
-#include "fft_time_kissfft.h"
-#include "fft_time_ne10.h"
-#include "fft_time_ffmpeg.h"
-#include "fft_time_ckfft.h"
-#include "fft_time_pffft.h"
+#define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
+#define MAX_FFT_ORDER_FIXED_POINT 12
 
 #define ENABLE_FIXED_POINT_FFT_TESTS
 
@@ -77,26 +76,14 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
                    int signal_type);
 void TimeRFFT32(int count, float signal_value, int signal_type);
 #endif
-#if defined(HAVE_NE10)
-void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
-                    int signal_type);
-void TimeNE10FFT(int count, float signal_value, int signal_type);
-void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
-                     int signal_type);
-void TimeNE10RFFT(int count, float signal_value, int signal_type);
-#endif
-#if defined(HAVE_CKFFT)
-void TimeCkFFTFFT(int count, float signal_value, int signal_type);
-void TimeCkFFTRFFT(int count, float signal_value, int signal_type);
-#endif
 
-int verbose = 1;
-int include_conversion = 0;
-int adapt_count = 1;
-int do_forward_test = 1;
-int do_inverse_test = 1;
-int min_fft_order = 2;
-int max_fft_order = MAX_FFT_ORDER;
+static int verbose = 1;
+static int include_conversion = 0;
+static int adapt_count = 1;
+static int do_forward_test = 1;
+static int do_inverse_test = 1;
+static int min_fft_order = 2;
+static int max_fft_order = MAX_FFT_ORDER;
 
 void TimeFFTUsage(char* prog) {
   fprintf(stderr, 
@@ -134,25 +121,7 @@ void TimeFFTUsage(char* prog) {
       "              3 - Real 16-bit\n"
       "              4 - Complex 32-bit\n"
       "              5 - Real 32-bit\n"
-#endif
-#if defined(HAVE_KISSFFT)
-      "              6 - KissFFT (complex)\n"
-#endif
-#if defined(HAVE_NE10)
-      "              7 - NE10 complex float\n"
-      "              8 - NE10 real float\n"
-#endif
-#if defined(HAVE_FFMPEG)
-      "              9 - FFmpeg complex float\n"
-      "              10 - FFmpeg real float\n"
-#endif
-#if defined(HAVE_CKFFT)
-      "              11 - Cricket FFT complex float\n"
-      "              12 - Cricket FFT real float\n"
-#endif
-#if defined(HAVE_PFFFT)
-      "              13 - PFFFT complex float\n"
-      "              14 - PFFFT real float\n"
+#else
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -162,8 +131,6 @@ void TimeFFTUsage(char* prog) {
       "              1 - Real ramp starting at S/N, N = FFT size\n"
       "              2 - Sine wave of amplitude S\n"
       "              3 - Complex signal whose transform is a sine wave.\n"
-      "  -O          Only run the float FFTs\n"
-      "  -t          Run full set of timing tests for the specified FFT"
       "\n"
       "Use -v 0 in combination with -F or -I to get output that can\n"
       "be pasted into a spreadsheet.\n"
@@ -183,12 +150,10 @@ int main(int argc, char* argv[]) {
   int count = 100;
   int fft_type = 0;
   int fft_type_given = 0;
-  int float_only_mode = 0;
-  int full_test_mode = 0;
 
   int opt;
 
-  while ((opt = getopt(argc, argv, "hTFICAc:n:s:S:g:v:f:m:M:Ot")) != -1) {
+  while ((opt = getopt(argc, argv, "hTFICAc:n:s:S:g:v:f:m:M:")) != -1) {
     switch (opt) {
       case 'h':
         TimeFFTUsage(argv[0]);
@@ -243,12 +208,6 @@ int main(int argc, char* argv[]) {
           max_fft_order = MAX_FFT_ORDER;
         }
         break;
-      case 'O':
-        float_only_mode = 1;
-        break;
-      case 't':
-        full_test_mode = 1;
-        break;
       default:
         TimeFFTUsage(argv[0]);
         break;
@@ -257,11 +216,6 @@ int main(int argc, char* argv[]) {
 
   if (test_mode && fft_type_given)
     printf("Warning:  -f ignored when -T not specified\n");
-
-  if (!test_mode && !fft_type_given) {
-    fprintf(stderr, "Error: -T requires -f\n");
-    exit(1);
-  }
 
   if (test_mode) {
 #if defined(__arm__) || defined(__aarch64__)
@@ -274,91 +228,29 @@ int main(int argc, char* argv[]) {
     TimeSC32FFT(count, signal_value, signal_type);
     TimeRFFT32(count, signal_value, signal_type);
 #endif
-#if defined(HAVE_KISSFFT)
-    TimeKissFFT(count, signal_value, signal_type);
-#endif
-#if defined(HAVE_NE10)
-    TimeNE10FFT(count, signal_value, signal_type);
-    TimeNE10RFFT(count, signal_value, signal_type);
-#endif
-#if defined(HAVE_FFMPEG)
-    TimeFFmpegFFT(count, signal_value, signal_type);
-    TimeFFmpegRFFT(count, signal_value, signal_type);
-#endif
-#if defined(HAVE_CKFFT)
-    TimeCkFFTFFT(count, signal_value, signal_type);
-    TimeCkFFTRFFT(count, signal_value, signal_type);
-#endif
-#if defined(HAVE_PFFFT)
-    TimePfFFT(count, signal_value, signal_type);
-    TimePfRFFT(count, signal_value, signal_type);
-#endif
   } else {
-    if (!full_test_mode) {
-      min_fft_order = fft_log_size;
-      max_fft_order = fft_log_size;
-    }
-
     switch (fft_type) {
 #if defined(__arm__) || defined(__aarch64__)
       case 0:
-        TimeFloatFFT(count, signal_value, signal_type);
+        TimeOneFloatFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
       case 1:
-        TimeFloatRFFT(count, signal_value, signal_type);
+        TimeOneFloatRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #ifdef ENABLE_FIXED_POINT_FFT_TESTS
       case 2:
-        TimeSC16FFT(count, signal_value, signal_type);
+        TimeOneSC16FFT(count, fft_log_size, signal_value, signal_type);
         break;
       case 3:
-        TimeRFFT16(count, signal_value, signal_type);
+        TimeOneRFFT16(count, fft_log_size, signal_value, signal_type, S32);
+        TimeOneRFFT16(count, fft_log_size, signal_value, signal_type, S16);
         break;
       case 4:
-        TimeSC32FFT(count, signal_value, signal_type);
+        TimeOneSC32FFT(count, fft_log_size, signal_value, signal_type);
         break;
       case 5:
-        TimeRFFT32(count, signal_value, signal_type);
-        break;
-#endif
-#if defined(HAVE_KISSFFT)
-      case 6:
-        TimeKissFFT(count, signal_value, signal_type);
-        break;
-#endif
-#if defined(HAVE_NE10)
-      case 7:
-        TimeNE10FFT(count, signal_value, signal_type);
-        break;
-      case 8:
-        TimeNE10RFFT(count, signal_value, signal_type);
-        break;
-#endif
-#if defined(HAVE_FFMPEG)
-      case 9:
-        TimeFFmpegFFT(count, signal_value, signal_type);
-        break;
-      case 10:
-        TimeFFmpegRFFT(count, signal_value, signal_type);
-        break;
-#endif
-#if defined(HAVE_CKFFT)
-      case 11:
-        TimeCkFFTFFT(count, signal_value, signal_type);
-        break;
-#endif
-#if defined(HAVE_CKFFT)
-      case 12:
-        TimeCkFFTRFFT(count, signal_value, signal_type);
-        break;
-#endif
-#if defined(HAVE_PFFFT)
-      case 13:
-        TimePfFFT(count, signal_value, signal_type);
-        break;
-      case 14:
-        TimePfRFFT(count, signal_value, signal_type);
+        TimeOneRFFT32(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
       default:
@@ -368,6 +260,22 @@ int main(int argc, char* argv[]) {
   }
 
   return 0;
+}
+
+void GetUserTime(struct timeval* time) {
+  struct rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+  memcpy(time, &usage.ru_utime, sizeof(*time));
+}
+
+double TimeDifference(const struct timeval * start,
+                      const struct timeval * end) {
+  double start_time;
+  double end_time;
+  start_time = start->tv_sec + start->tv_usec * 1e-6;
+  end_time = end->tv_sec + end->tv_usec * 1e-6;
+
+  return end_time - start_time;
 }
 
 void PrintShortHeader(const char* message) {
@@ -381,7 +289,6 @@ void PrintShortHeader(const char* message) {
   printf("%s\n", message);
 }
 
-#if 0
 void PrintResult(const char* prefix, int fft_log_size, double elapsed_time,
                  int count) {
   if (verbose == 0) {
@@ -416,7 +323,6 @@ int ComputeCount(int nominal_count, int fft_log_size) {
 
   return count;
 }
-#endif
 
 #if defined(__arm__) || defined(__aarch64__)
 void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
@@ -469,7 +375,7 @@ void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward Float FFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Forward Float FFT", fft_log_size, elapsed_time, count);
   }
 
   if (do_inverse_test) {
@@ -481,7 +387,7 @@ void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse Float FFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Inverse Float FFT", fft_log_size, elapsed_time, count);
   }
 
   FreeAlignedPointer(x_aligned);
@@ -499,11 +405,40 @@ void TimeFloatFFT(int count, float signal_value, int signal_type) {
     PrintShortHeader("Float FFT");
 
   for (k = min_fft_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k, adapt_count);
+    int testCount = ComputeCount(count, k);
     TimeOneFloatFFT(testCount, k, signal_value, signal_type);
   }
 }
 #endif
+
+void GenerateRealFloatSignal(OMX_F32* x, OMX_FC32* fft, int size,
+                             int signal_type, float signal_value)
+{
+  int k;
+  struct ComplexFloat *test_signal;
+  struct ComplexFloat *true_fft;
+
+  test_signal = (struct ComplexFloat*) malloc(sizeof(*test_signal) * size);
+  true_fft = (struct ComplexFloat*) malloc(sizeof(*true_fft) * size);
+  GenerateTestSignalAndFFT(test_signal, true_fft, size, signal_type,
+                           signal_value, 1);
+
+  /*
+   * Convert the complex result to what we want
+   */
+
+  for (k = 0; k < size; ++k) {
+    x[k] = test_signal[k].Re;
+  }
+
+  for (k = 0; k < size / 2 + 1; ++k) {
+    fft[k].Re = true_fft[k].Re;
+    fft[k].Im = true_fft[k].Im;
+  }
+
+  free(test_signal);
+  free(true_fft);
+}
 
 void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
                       int signal_type) {
@@ -540,7 +475,7 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
 
   y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
 
-  GenerateRealFloatSignal(x, (struct ComplexFloat*) y_true, fft_size, signal_type,
+  GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
                           signal_value);
 
   status = omxSP_FFTGetBufSize_R_F32(fft_log_size, &fft_spec_buffer_size);
@@ -560,14 +495,7 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward Float RFFT", fft_log_size, elapsed_time, count, verbose);
-    if (verbose >= 255) {
-      OMX_FC32* fft = (OMX_FC32*) y;
-      printf("FFT Actual:\n");
-      DumpArrayComplexFloat("y", fft_size / 2, fft);
-      printf("FFT Expected:\n");
-      DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
-    }
+    PrintResult("Forward Float RFFT", fft_log_size, elapsed_time, count);
   }
 
   if (do_inverse_test) {
@@ -579,7 +507,7 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse Float RFFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Inverse Float RFFT", fft_log_size, elapsed_time, count);
   }
 
   FreeAlignedPointer(x_aligned);
@@ -596,7 +524,7 @@ void TimeFloatRFFT(int count, float signal_value, int signal_type) {
     PrintShortHeader("Float RFFT");
   
   for (k = min_fft_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k, adapt_count);
+    int testCount = ComputeCount(count, k);
     TimeOneFloatRFFT(testCount, k, signal_value, signal_type);
   }
 }
@@ -715,7 +643,7 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward SC32 FFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Forward SC32 FFT", fft_log_size, elapsed_time, count);
   }
 
   if (do_inverse_test) {
@@ -758,7 +686,7 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse SC32 FFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Inverse SC32 FFT", fft_log_size, elapsed_time, count);
   }
 
   FreeAlignedPointer(x_aligned);
@@ -779,7 +707,7 @@ void TimeSC32FFT(int count, float signal_value, int signal_type) {
     PrintShortHeader("SC32 FFT");
 
   for (k = min_fft_order; k <= max_order; ++k) {
-    int testCount = ComputeCount(count, k, adapt_count);
+    int testCount = ComputeCount(count, k);
     TimeOneSC32FFT(testCount, k, signal_value, signal_type);
   }
 }
@@ -897,7 +825,7 @@ void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward SC16 FFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Forward SC16 FFT", fft_log_size, elapsed_time, count);
   }
 
   if (do_inverse_test) {
@@ -940,7 +868,7 @@ void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse SC16 FFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Inverse SC16 FFT", fft_log_size, elapsed_time, count);
   }
 
   FreeAlignedPointer(x_aligned);
@@ -961,7 +889,7 @@ void TimeSC16FFT(int count, float signal_value, int signal_type) {
     PrintShortHeader("SC16 FFT");
 
   for (k = min_fft_order; k <= max_order; ++k) {
-    int testCount = ComputeCount(count, k, adapt_count);
+    int testCount = ComputeCount(count, k);
     TimeOneSC16FFT(testCount, k, signal_value, signal_type);
   }
 }
@@ -1057,7 +985,7 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
   /*
    * Generate a real version so we can measure scaling costs
    */
-  GenerateRealFloatSignal(xr, (struct ComplexFloat*) yrTrue, fft_size, signal_type,
+  GenerateRealFloatSignal(xr, (OMX_FC32*) yrTrue, fft_size, signal_type,
                           signal_value);
 
   if(s16s32 == S32) {
@@ -1086,8 +1014,8 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
          * Spend some time computing the max of the signal, and then scaling it.
          */
         for (n = 0; n < fft_size; ++n) {
-          if (fabs(xr[n]) > factor) {
-            factor = fabs(xr[n]);
+          if (abs(xr[n]) > factor) {
+            factor = abs(xr[n]);
           }
         }
 
@@ -1134,11 +1062,11 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
 
     if(s16s32 == S32) {
       PrintResult("Forward RFFT16 (with S32)",
-                  fft_log_size, elapsed_time, count, verbose);
+                  fft_log_size, elapsed_time, count);
     }
     else {
       PrintResult("Forward RFFT16 (with S16)",
-                  fft_log_size, elapsed_time, count, verbose);
+                  fft_log_size, elapsed_time, count);
     }
   }
 
@@ -1153,8 +1081,8 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
          * Spend some time scaling the FFT signal to fixed point.
          */
         for (n = 0; n < fft_size; ++n) {
-          if (fabs(yrTrue[n]) > factor) {
-            factor = fabs(yrTrue[n]);
+          if (abs(yrTrue[n]) > factor) {
+            factor = abs(yrTrue[n]);
           }
         }
         for (n = 0; n < fft_size; ++n) {
@@ -1197,11 +1125,11 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
 
     if(s16s32 == S32) {
       PrintResult("Inverse RFFT16 (with S32)",
-                  fft_log_size, elapsed_time, count, verbose);
+                  fft_log_size, elapsed_time, count);
     }
     else {
       PrintResult("Inverse RFFT16 (with S16)",
-                  fft_log_size, elapsed_time, count, verbose);
+                  fft_log_size, elapsed_time, count);
     }
   }
 
@@ -1224,7 +1152,7 @@ void TimeRFFT16(int count, float signal_value, int signal_type) {
     PrintShortHeader("RFFT16 (with S32)");
 
   for (k = min_fft_order; k <= max_order; ++k) {
-    int testCount = ComputeCount(count, k, adapt_count);
+    int testCount = ComputeCount(count, k);
     TimeOneRFFT16(testCount, k, signal_value, signal_type, 1);
   }
 
@@ -1232,7 +1160,7 @@ void TimeRFFT16(int count, float signal_value, int signal_type) {
     PrintShortHeader("RFFT16 (with S16)");
 
   for (k = min_fft_order; k <= max_order; ++k) {
-    int testCount = ComputeCount(count, k, adapt_count);
+    int testCount = ComputeCount(count, k);
     TimeOneRFFT16(testCount, k, signal_value, signal_type, 0);
   }
 }
@@ -1293,7 +1221,6 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
   int scaleFactor;
 
   fft_size = 1 << fft_log_size;
-  scaleFactor = fft_log_size;
 
   x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
@@ -1356,8 +1283,8 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
          * Spend some time computing the max of the signal, and then scaling it.
          */
         for (n = 0; n < fft_size; ++n) {
-          if (fabs(xr[n]) > factor) {
-            factor = fabs(xr[n]);
+          if (abs(xr[n]) > factor) {
+            factor = abs(xr[n]);
           }
         }
 
@@ -1391,7 +1318,7 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward RFFT32", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Forward RFFT32", fft_log_size, elapsed_time, count);
   }
 
   if (do_inverse_test) {
@@ -1405,8 +1332,8 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
          * Spend some time scaling the FFT signal to fixed point.
          */
         for (n = 0; n < fft_size + 2; ++n) {
-          if (fabs(yrTrue[n]) > factor) {
-            factor = fabs(yrTrue[n]);
+          if (abs(yrTrue[n]) > factor) {
+            factor = abs(yrTrue[n]);
           }
         }
         for (n = 0; n < fft_size + 2; ++n) {
@@ -1434,7 +1361,7 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse RFFT32", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Inverse RFFT32", fft_log_size, elapsed_time, count);
   }
 
   FreeAlignedPointer(x_aligned);
@@ -1454,7 +1381,7 @@ void TimeRFFT32(int count, float signal_value, int signal_type) {
     PrintShortHeader("RFFT32");
 
   for (k = min_fft_order; k <= max_order; ++k) {
-    int testCount = ComputeCount(count, k, adapt_count);
+    int testCount = ComputeCount(count, k);
     TimeOneRFFT32(testCount, k, signal_value, signal_type);
   }
 }
