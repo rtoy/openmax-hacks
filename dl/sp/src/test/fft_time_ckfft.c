@@ -9,7 +9,7 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 
-#include "../other-fft/ckfft-1.0/inc/ckfft/ckfft.h"
+#include "../../../../third_party/other-fft/ckfft-1.0/inc/ckfft/ckfft.h"
 
 extern int verbose;
 extern int include_conversion;
@@ -18,6 +18,14 @@ extern int do_forward_test;
 extern int do_inverse_test;
 extern int min_fft_order;
 extern int max_fft_order;
+void GetUserTime(struct timeval* time);
+double TimeDifference(const struct timeval * start,
+                      const struct timeval * end);
+void PrintResult(const char* prefix, int fft_log_size, double elapsed_time,
+                 int count);
+int ComputeCount(int nominal_count, int fft_log_size);
+void GenerateRealFloatSignal(OMX_F32* x, OMX_FC32* fft, int size,
+                             int signal_type, float signal_value);
 
 void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
                      int signal_type) {
@@ -88,7 +96,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
     if (verbose > 255)
       printf("Effective FFT time:  %g sec\n", elapsed_time);
 
-    PrintResult("Forward CkFFT FFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Forward CkFFT FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
@@ -128,7 +136,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
     if (verbose > 255)
       printf("Effective FFT time:  %g sec\n", elapsed_time);
 
-    PrintResult("Inverse CkFFT FFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Inverse CkFFT FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
       DumpArrayComplexFloat("z", fft_size, z);
@@ -152,7 +160,7 @@ void TimeCkFFTFFT(int count, float signal_value, int signal_type) {
     printf("%s CkFFT FFT\n", do_forward_test ? "Forward" : "Inverse");
   
   for (k = min_fft_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k, adapt_count);
+    int testCount = ComputeCount(count, k);
     TimeOneCkFFTFFT(testCount, k, signal_value, signal_type);
   }
 }
@@ -219,7 +227,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
       printf("FFT time          :  %g sec\n", elapsed_time);
     }
 
-    PrintResult("Forward CkFFT RFFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Forward CkFFT RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       OMX_FC32* fft = (OMX_FC32*) y;
       printf("FFT Actual:\n");
@@ -253,7 +261,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
       printf("IFFT time          :  %g sec\n", elapsed_time);
     }
 
-    PrintResult("Inverse CkFFT RFFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Inverse CkFFT RFFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
       DumpArrayFloat("z", fft_size, z);
@@ -278,7 +286,7 @@ void TimeCkFFTRFFT(int count, float signal_value, int signal_type) {
     printf("%s CkFFT RFFT\n", do_forward_test ? "Forward" : "Inverse");
   
   for (k = min_fft_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k, adapt_count);
+    int testCount = ComputeCount(count, k);
     TimeOneCkFFTRFFT(testCount, k, signal_value, signal_type);
   }
 }
