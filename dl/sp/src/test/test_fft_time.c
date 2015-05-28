@@ -87,10 +87,14 @@ void TimeNE10RFFT(int count, float signal_value, int signal_type);
 #if defined(HAVE_CKFFT)
 void TimeCkFFTFFT(int count, float signal_value, int signal_type);
 void TimeCkFFTRFFT(int count, float signal_value, int signal_type);
+void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value, int signal_type);
+void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value, int signal_type);
 #endif
 #if defined(HAVE_PFFFT)
 void TimePfFFT(int count, float signal_value, int signal_type);
 void TimePfRFFT(int count, float signal_value, int signal_type);
+void TimeOnePfFFT(int count, int fft_log_size, float signal_value, int signal_type);
+void TimeOnePfRFFT(int count, int fft_log_size, float signal_value, int signal_type);
 #endif
 
 int verbose = 1;
@@ -308,41 +312,41 @@ int main(int argc, char* argv[]) {
 #endif
 #if defined(HAVE_KISSFFT)
       case 6:
-        TimeKissFFT(count, signal_value, signal_type);
+        TimeOneKissFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
 #if defined(HAVE_NE10)
       case 7:
-        TimeNE10FFT(count, signal_value, signal_type);
+        TimeOneNE10FFT(count, fft_log_size, signal_value, signal_type);
         break;
       case 8:
-        TimeNE10RFFT(count, signal_value, signal_type);
+        TimeOneNE10RFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
 #if defined(HAVE_FFMPEG)
       case 9:
-        TimeFFmpegFFT(count, signal_value, signal_type);
+        TimeOneFFmpegFFT(count, fft_log_size, signal_value, signal_type);
         break;
       case 10:
-        TimeFFmpegRFFT(count, signal_value, signal_type);
+        TimeOneFFmpegRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
 #if defined(HAVE_CKFFT)
       case 11:
-        TimeCkFFTFFT(count, signal_value, signal_type);
+        TimeOneCkFFTFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
 #if defined(HAVE_CKFFT)
       case 12:
-        TimeCkFFTRFFT(count, signal_value, signal_type);
+        TimeOneCkFFTRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
 #if defined(HAVE_PFFFT)
       case 13:
-        TimePfFFT(count, signal_value, signal_type);
+        TimeOnePfFFT(count, fft_log_size, signal_value, signal_type);
         break;
       case 14:
-        TimePfRFFT(count, signal_value, signal_type);
+        TimeOnePfRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
       default:
