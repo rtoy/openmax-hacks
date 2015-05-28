@@ -97,6 +97,10 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value, int signal_ty
 void TimeOnePfRFFT(int count, int fft_log_size, float signal_value, int signal_type);
 #endif
 
+#if defined(HAVE_NE10)
+void InitializeNE10();
+#endif
+
 int verbose = 1;
 int do_forward_test = 1;
 int do_inverse_test = 1;
@@ -254,6 +258,11 @@ int main(int argc, char* argv[]) {
 
   if (test_mode && fft_type_given)
     printf("Warning:  -f ignored when -T not specified\n");
+
+#if defined(HAVE_NE10)
+  /* Need to initialize things if we have Ne10 available */
+  InitializeNE10();
+#endif
 
   if (test_mode) {
 #if defined(__arm__) || defined(__aarch64__)

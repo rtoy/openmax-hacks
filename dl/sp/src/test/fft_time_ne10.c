@@ -27,6 +27,14 @@ int ComputeCount(int nominal_count, int fft_log_size);
 void GenerateRealFloatSignal(OMX_F32* x, void* fft, int size,
                              int signal_type, float signal_value);
 
+void InitializeNE10()
+{
+  /* Need to initialize things if we have Ne10 available */
+  extern int omxSP_HasArmNeon();
+  extern ne10_result_t ne10_init_dsp (ne10_int32_t is_NEON_available);
+  ne10_init_dsp(omxSP_HasArmNeon());
+}
+
 void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
                     int signal_type) {
   struct AlignedPtr* x_aligned;
