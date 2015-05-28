@@ -76,6 +76,22 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
                    int signal_type);
 void TimeRFFT32(int count, float signal_value, int signal_type);
 #endif
+#if defined(HAVE_NE10)
+void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
+                    int signal_type);
+void TimeNE10FFT(int count, float signal_value, int signal_type);
+void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
+                     int signal_type);
+void TimeNE10RFFT(int count, float signal_value, int signal_type);
+#endif
+#if defined(HAVE_CKFFT)
+void TimeCkFFTFFT(int count, float signal_value, int signal_type);
+void TimeCkFFTRFFT(int count, float signal_value, int signal_type);
+#endif
+#if defined(HAVE_PFFFT)
+void TimePfFFT(int count, float signal_value, int signal_type);
+void TimePfRFFT(int count, float signal_value, int signal_type);
+#endif
 
 int verbose = 1;
 int do_forward_test = 1;
@@ -121,7 +137,25 @@ void TimeFFTUsage(char* prog) {
       "              3 - Real 16-bit\n"
       "              4 - Complex 32-bit\n"
       "              5 - Real 32-bit\n"
-#else
+#endif
+#if defined(HAVE_KISSFFT)
+      "              6 - KissFFT (complex)\n"
+#endif
+#if defined(HAVE_NE10)
+      "              7 - NE10 complex float\n"
+      "              8 - NE10 real float\n"
+#endif
+#if defined(HAVE_FFMPEG)
+      "              9 - FFmpeg complex float\n"
+      "              10 - FFmpeg real float\n"
+#endif
+#if defined(HAVE_CKFFT)
+      "              11 - Cricket FFT complex float\n"
+      "              12 - Cricket FFT real float\n"
+#endif
+#if defined(HAVE_PFFFT)
+      "              13 - PFFFT complex float\n"
+      "              14 - PFFFT real float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -228,6 +262,25 @@ int main(int argc, char* argv[]) {
     TimeSC32FFT(count, signal_value, signal_type);
     TimeRFFT32(count, signal_value, signal_type);
 #endif
+#if defined(HAVE_KISSFFT)
+    TimeKissFFT(count, signal_value, signal_type);
+#endif
+#if defined(HAVE_NE10)
+    TimeNE10FFT(count, signal_value, signal_type);
+    TimeNE10RFFT(count, signal_value, signal_type);
+#endif
+#if defined(HAVE_FFMPEG)
+    TimeFFmpegFFT(count, signal_value, signal_type);
+    TimeFFmpegRFFT(count, signal_value, signal_type);
+#endif
+#if defined(HAVE_CKFFT)
+    TimeCkFFTFFT(count, signal_value, signal_type);
+    TimeCkFFTRFFT(count, signal_value, signal_type);
+#endif
+#if defined(HAVE_PFFFT)
+    TimePfFFT(count, signal_value, signal_type);
+    TimePfRFFT(count, signal_value, signal_type);
+#endif
   } else {
     switch (fft_type) {
 #if defined(__arm__) || defined(__aarch64__)
@@ -251,6 +304,45 @@ int main(int argc, char* argv[]) {
         break;
       case 5:
         TimeOneRFFT32(count, fft_log_size, signal_value, signal_type);
+        break;
+#endif
+#if defined(HAVE_KISSFFT)
+      case 6:
+        TimeKissFFT(count, signal_value, signal_type);
+        break;
+#endif
+#if defined(HAVE_NE10)
+      case 7:
+        TimeNE10FFT(count, signal_value, signal_type);
+        break;
+      case 8:
+        TimeNE10RFFT(count, signal_value, signal_type);
+        break;
+#endif
+#if defined(HAVE_FFMPEG)
+      case 9:
+        TimeFFmpegFFT(count, signal_value, signal_type);
+        break;
+      case 10:
+        TimeFFmpegRFFT(count, signal_value, signal_type);
+        break;
+#endif
+#if defined(HAVE_CKFFT)
+      case 11:
+        TimeCkFFTFFT(count, signal_value, signal_type);
+        break;
+#endif
+#if defined(HAVE_CKFFT)
+      case 12:
+        TimeCkFFTRFFT(count, signal_value, signal_type);
+        break;
+#endif
+#if defined(HAVE_PFFFT)
+      case 13:
+        TimePfFFT(count, signal_value, signal_type);
+        break;
+      case 14:
+        TimePfRFFT(count, signal_value, signal_type);
         break;
 #endif
       default:
