@@ -77,13 +77,13 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
 void TimeRFFT32(int count, float signal_value, int signal_type);
 #endif
 
-static int verbose = 1;
+int verbose = 1;
+int do_forward_test = 1;
+int do_inverse_test = 1;
+int min_fft_order = 2;
+int max_fft_order = MAX_FFT_ORDER;
 static int include_conversion = 0;
 static int adapt_count = 1;
-static int do_forward_test = 1;
-static int do_inverse_test = 1;
-static int min_fft_order = 2;
-static int max_fft_order = MAX_FFT_ORDER;
 
 void TimeFFTUsage(char* prog) {
   fprintf(stderr, 
@@ -411,13 +411,15 @@ void TimeFloatFFT(int count, float signal_value, int signal_type) {
 }
 #endif
 
-void GenerateRealFloatSignal(OMX_F32* x, OMX_FC32* fft, int size,
+void GenerateRealFloatSignal(OMX_F32* x, void* fft_void, int size,
                              int signal_type, float signal_value)
 {
   int k;
   struct ComplexFloat *test_signal;
   struct ComplexFloat *true_fft;
 
+  OMX_FC32* fft = (OMX_FC32*) fft_void;
+  
   test_signal = (struct ComplexFloat*) malloc(sizeof(*test_signal) * size);
   true_fft = (struct ComplexFloat*) malloc(sizeof(*true_fft) * size);
   GenerateTestSignalAndFFT(test_signal, true_fft, size, signal_type,

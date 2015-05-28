@@ -27,7 +27,7 @@ double TimeDifference(const struct timeval * start,
 void PrintResult(const char* prefix, int fft_log_size, double elapsed_time,
                  int count);
 int ComputeCount(int nominal_count, int fft_log_size);
-void GenerateRealFloatSignal(OMX_F32* x, OMX_FC32* fft, int size,
+void GenerateRealFloatSignal(OMX_F32* x, void* fft, int size,
                              int signal_type, float signal_value);
 
 /*
