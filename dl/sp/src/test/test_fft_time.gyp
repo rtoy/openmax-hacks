@@ -45,7 +45,7 @@
           'HAVE_KISSFFT',
         ],
         'dependencies' : [
-          '../../../../../other-fft/kissfft.gyp:kissfft',
+          '../../../../third_party/other-fft/kissfft.gyp:kissfft',
         ],
       }],
       ['ne10 == 1', {
@@ -53,7 +53,7 @@
           'HAVE_NE10',
         ],
         'dependencies' : [
-          '../../../../../other-fft/ne10.gyp:ne10',
+          '../../../../third_party/other-fft/ne10.gyp:ne10',
         ]
       }],
       ['ffmpeg == 1', {
@@ -61,7 +61,7 @@
           'HAVE_FFMPEG',
         ],
         'dependencies' : [
-          '../../../../../other-fft/ffmpeg.gyp:ffmpeg',
+          '../../../../third_party/other-fft/ffmpeg.gyp:ffmpeg',
         ]
       }],
       ['ckfft == 1', {
@@ -69,7 +69,7 @@
           'HAVE_CKFFT',
         ],
         'dependencies' : [
-          '../../../../../other-fft/ckfft.gyp:ckfft'
+          '../../../../third_party/other-fft/ckfft.gyp:ckfft'
         ],
       }],
       ['pffft == 1', {
@@ -90,7 +90,7 @@
           }],
         ],
         'dependencies' : [
-          '../../../../../other-fft/pffft.gyp:pffft'
+          '../../../../third_party/other-fft/pffft.gyp:pffft'
         ],
       }],
     ],
