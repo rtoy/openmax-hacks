@@ -34,11 +34,14 @@ ne10_result_t ne10_init_dsp (ne10_int32_t is_NEON_available)
     if (NE10_OK == is_NEON_available)
     {
         ne10_fft_alloc_c2c_float32 = ne10_fft_alloc_c2c_float32_neon;
+#if 0
         ne10_fft_alloc_c2c_int32 = ne10_fft_alloc_c2c_int32_neon;
+#endif
         ne10_fft_c2c_1d_float32 = ne10_fft_c2c_1d_float32_neon;
         ne10_fft_r2c_1d_float32 = ne10_fft_r2c_1d_float32_neon;
         ne10_fft_c2r_1d_float32 = ne10_fft_c2r_1d_float32_neon;
 
+#if 0
         ne10_fft_c2c_1d_int32 = ne10_fft_c2c_1d_int32_neon;
         ne10_fft_r2c_1d_int32 = ne10_fft_r2c_1d_int32_neon;
         ne10_fft_c2r_1d_int32 = ne10_fft_c2r_1d_int32_neon;
@@ -82,15 +85,19 @@ ne10_result_t ne10_init_dsp (ne10_int32_t is_NEON_available)
 #else
         ne10_iir_lattice_float = ne10_iir_lattice_float_c;
 #endif // ENABLE_NE10_IIR_LATTICE_FLOAT_NEON
+#endif
     }
     else
     {
         ne10_fft_alloc_c2c_float32 = ne10_fft_alloc_c2c_float32_c;
+#if 0
         ne10_fft_alloc_c2c_int32 = ne10_fft_alloc_c2c_int32_c;
+#endif
         ne10_fft_c2c_1d_float32 = ne10_fft_c2c_1d_float32_c;
         ne10_fft_r2c_1d_float32 = ne10_fft_r2c_1d_float32_c;
         ne10_fft_c2r_1d_float32 = ne10_fft_c2r_1d_float32_c;
 
+#if 0
         ne10_fft_c2c_1d_int32 = ne10_fft_c2c_1d_int32_c;
         ne10_fft_r2c_1d_int32 = ne10_fft_r2c_1d_int32_c;
         ne10_fft_c2r_1d_int32 = ne10_fft_c2r_1d_int32_c;
@@ -106,6 +113,7 @@ ne10_result_t ne10_init_dsp (ne10_int32_t is_NEON_available)
         ne10_fir_sparse_float = ne10_fir_sparse_float_c;
 
         ne10_iir_lattice_float = ne10_iir_lattice_float_c;
+#endif
     }
     return NE10_OK;
 }
