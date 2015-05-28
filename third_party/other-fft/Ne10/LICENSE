@@ -24,29 +24,7 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+ 
 /*
- * NE10 Library : common/NE10_mask_table.h
- */
-
-#include "NE10_types.h"
-#ifndef _ARM_MASK_TABLE_H
-#define _ARM_MASK_TABLE_H
-
-#define Q_MASK_TABLE_SIZE        20
-#define D_MASK_TABLE_SIZE        6
-#define DIV_LOOKUP_TABLE_SIZE    255
-
-/* mask table for dsp module */
-extern const ne10_uint32_t ne10_qMaskTable32[Q_MASK_TABLE_SIZE] asm ("ne10_qMaskTable32");
-extern const ne10_uint32_t ne10_dMaskTable32[D_MASK_TABLE_SIZE] asm ("ne10_dMaskTable32");
-extern const ne10_uint32_t ne10_divLookUpTable[DIV_LOOKUP_TABLE_SIZE] \
-asm ("ne10_divLookUpTable");
-
-/* mask table for imgproc module */
-#define NE10_VRESIZE_LINEAR_MASK_TABLE_SIZE    7
-extern const ne10_uint64_t ne10_img_vresize_linear_mask_residual_table[NE10_VRESIZE_LINEAR_MASK_TABLE_SIZE] \
-asm ("ne10_vresize_mask_residual_table");
-
-#endif
-
+ * See: http://opensource.org/licenses/BSD-3-Clause for template
+*/
