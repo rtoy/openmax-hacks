@@ -101,7 +101,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
       int m;
       
       memcpy(z, y_true, sizeof(*z) * fft_size);
-      CkFftComplexInverse(fft_spec, fft_size, (CkFftComplex*) y, (CkFftComplex*) z);
+      CkFftComplexInverse(fft_spec, fft_size, (CkFftComplex*) y_true, (CkFftComplex*) z);
 
       // CkFftComplexInverse doesn't scale the inverse by 1/N, so we
       // need to do it since the other FFTs do.
@@ -232,13 +232,13 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
   }
 
   if (do_inverse_test) {
-    float scale = 2.0 / fft_size;
+    float scale = 1.0 / fft_size;
 
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       int m;
       
-      CkFftRealInverse(fft_spec, fft_size, (CkFftComplex*)y, z, (CkFftComplex*) tmp);
+      CkFftRealInverse(fft_spec, fft_size, (CkFftComplex*)y_true, z, (CkFftComplex*) tmp);
 
       // CkFftComplexInverse doesn't scale the inverse by 1/N, so we
       // need to do it since the other FFTs do.
