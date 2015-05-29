@@ -13,10 +13,35 @@
 
 #define MAX_FFT_ORDER_FIXED_POINT 12
 
+/*
+ * Enum for kind of routine to use when timing one RFFT16 FFT.
+ */
 typedef enum {
   S16,
   S32,
 } s16_s32;
+
+/*
+ * The different kinds of FFTs supported by this timing program. 
+ */
+
+enum {
+  OPENMAX_COMPLEX_FLOAT,
+  OPENMAX_REAL_FLOAT,
+  OPENMAX_COMPLEX_16BIT,
+  OPENMAX_REAL_16BIT,
+  OPENMAX_COMPLEX_32BIT,
+  OPENMAX_REAL_32BIT,
+  KISSFFT_COMPLEX_FLOAT = 10,
+  NE10_COMPLEX_FLOAT = 12,
+  NE10_REAL_FLOAT,
+  FFMPEG_COMPLEX_FLOAT = 14,
+  FFMPEG_REAL_FLOAT,
+  CRICKET_COMPLEX_FLOAT = 16,
+  CRICKET_REAL_FLOAT,
+  PFFFT_COMPLEX_FLOAT = 18,
+  PFFFT_REAL_FLOAT
+};
 
 extern int verbose;
 extern int include_conversion;

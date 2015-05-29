@@ -118,34 +118,34 @@ void TimeFFTUsage(char* prog) {
       "                this case.\n"
       "  -T          Run just one FFT timing test\n"
       "  -f          FFT type:\n"
-      "              0 - Complex Float\n"
+      "              %2d - OpenMAX Complex Float\n"
 #if defined(__arm__) || defined(__aarch64__)
-      "              1 - Real Float\n"
+      "              %2d - OpenMAX Real Float\n"
 #endif
 #ifdef ENABLE_FIXED_POINT_FFT_TESTS
-      "              2 - Complex 16-bit\n"
-      "              3 - Real 16-bit\n"
-      "              4 - Complex 32-bit\n"
-      "              5 - Real 32-bit\n"
+      "              %2d - OpenMAX Complex 16-bit\n"
+      "              %2d - OpenMAX Real 16-bit\n"
+      "              %2d - OpenMAX Complex 32-bit\n"
+      "              %2d - OpenMAX Real 32-bit\n"
 #endif
 #if defined(HAVE_KISSFFT)
-      "              6 - KissFFT (complex)\n"
+      "              %2d - KissFFT (complex)\n"
 #endif
 #if defined(HAVE_NE10)
-      "              7 - NE10 complex float\n"
-      "              8 - NE10 real float\n"
+      "              %2d - NE10 complex float\n"
+      "              %2d - NE10 real float\n"
 #endif
 #if defined(HAVE_FFMPEG)
-      "              9 - FFmpeg complex float\n"
-      "              10 - FFmpeg real float\n"
+      "              %2d - FFmpeg complex float\n"
+      "              %2d - FFmpeg real float\n"
 #endif
 #if defined(HAVE_CKFFT)
-      "              11 - Cricket FFT complex float\n"
-      "              12 - Cricket FFT real float\n"
+      "              %2d - Cricket FFT complex float\n"
+      "              %2d - Cricket FFT real float\n"
 #endif
 #if defined(HAVE_PFFFT)
-      "              13 - PFFFT complex float\n"
-      "              14 - PFFFT real float\n"
+      "              %2d - PFFFT complex float\n"
+      "              %2d - PFFFT real float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -161,7 +161,37 @@ void TimeFFTUsage(char* prog) {
       "\n"
       "Most of the options listed after -T above are only applicable\n"
       "when -T is given to test just one FFT size and FFT type.\n"
-      "\n");
+      "\n",
+      OPENMAX_COMPLEX_FLOAT,
+#if defined(__arm__) || defined(__aarch64__)
+      OPENMAX_REAL_FLOAT,
+#endif
+#ifdef ENABLE_FIXED_POINT_FFT_TESTS
+      OPENMAX_COMPLEX_16BIT,
+      OPENMAX_REAL_16BIT,
+      OPENMAX_COMPLEX_32BIT,
+      OPENMAX_REAL_32BIT,
+#endif
+#if defined(HAVE_KISSFFT)
+      KISSFFT_COMPLEX_FLOAT,
+#endif
+#if defined(HAVE_NE10)
+     NE10_COMPLEX_FLOAT,
+     NE10_REAL_FLOAT,
+#endif
+#if defined(HAVE_FFMPEG)
+     FFMPEG_COMPLEX_FLOAT,
+     FFMPEG_REAL_FLOAT,
+#endif
+#if defined(HAVE_CKFFT)
+     CRICKET_COMPLEX_FLOAT,
+     CRICKET_REAL_FLOAT,
+#endif
+#if defined(HAVE_PFFFT)
+     PFFFT_COMPLEX_FLOAT,
+     PFFFT_REAL_FLOAT
+#endif
+      );
   exit(0);
 }
 
@@ -491,4 +521,3 @@ void GenerateRealFloatSignal(OMX_F32* x, void* fft_void, int size,
   free(test_signal);
   free(true_fft);
 }
-
