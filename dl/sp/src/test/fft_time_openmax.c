@@ -78,10 +78,7 @@ void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size);
 
-    PrintResult("Forward Float FFT", fft_log_size, elapsed_time, count);
-    if (verbose > 0)
-      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
-
+    PrintResult("Forward Float FFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
   }
 
   if (do_inverse_test) {
@@ -95,10 +92,7 @@ void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_inverse, (OMX_FC32*) z, (OMX_FC32*) x, fft_size);
 
-    PrintResult("Inverse Float FFT", fft_log_size, elapsed_time, count);
-
-    if (verbose > 0) 
-      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+    PrintResult("Inverse Float FFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
   }
 
   FreeAlignedPointer(x_aligned);
@@ -181,10 +175,7 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size / 2 + 1);
 
-    PrintResult("Forward Float RFFT", fft_log_size, elapsed_time, count);
-
-    if (verbose > 0)
-      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+    PrintResult("Forward Float RFFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
   }
 
   if (do_inverse_test) {
@@ -198,9 +189,7 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
 
     CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
 
-    PrintResult("Inverse Float RFFT", fft_log_size, elapsed_time, count);
-    if (verbose > 0)
-      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+    PrintResult("Inverse Float RFFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
   }
 
   FreeAlignedPointer(x_aligned);
@@ -336,7 +325,7 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward SC32 FFT", fft_log_size, elapsed_time, count);
+    PrintResultNoSNR("Forward SC32 FFT", fft_log_size, elapsed_time, count);
   }
 
   if (do_inverse_test) {
@@ -379,7 +368,7 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse SC32 FFT", fft_log_size, elapsed_time, count);
+    PrintResultNoSNR("Inverse SC32 FFT", fft_log_size, elapsed_time, count);
   }
 
   FreeAlignedPointer(x_aligned);
@@ -518,7 +507,7 @@ void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward SC16 FFT", fft_log_size, elapsed_time, count);
+    PrintResultNoSNR("Forward SC16 FFT", fft_log_size, elapsed_time, count);
   }
 
   if (do_inverse_test) {
@@ -561,7 +550,7 @@ void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse SC16 FFT", fft_log_size, elapsed_time, count);
+    PrintResultNoSNR("Inverse SC16 FFT", fft_log_size, elapsed_time, count);
   }
 
   FreeAlignedPointer(x_aligned);
@@ -754,12 +743,12 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
     elapsed_time = TimeDifference(&start_time, &end_time);
 
     if(s16s32 == S32) {
-      PrintResult("Forward RFFT16 (with S32)",
-                  fft_log_size, elapsed_time, count);
+      PrintResultNoSNR("Forward RFFT16 (with S32)",
+                       fft_log_size, elapsed_time, count);
     }
     else {
-      PrintResult("Forward RFFT16 (with S16)",
-                  fft_log_size, elapsed_time, count);
+      PrintResultNoSNR("Forward RFFT16 (with S16)",
+                       fft_log_size, elapsed_time, count);
     }
   }
 
@@ -817,12 +806,12 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
     elapsed_time = TimeDifference(&start_time, &end_time);
 
     if(s16s32 == S32) {
-      PrintResult("Inverse RFFT16 (with S32)",
-                  fft_log_size, elapsed_time, count);
+      PrintResultNoSNR("Inverse RFFT16 (with S32)",
+                       fft_log_size, elapsed_time, count);
     }
     else {
-      PrintResult("Inverse RFFT16 (with S16)",
-                  fft_log_size, elapsed_time, count);
+      PrintResultNoSNR("Inverse RFFT16 (with S16)",
+                       fft_log_size, elapsed_time, count);
     }
   }
 
@@ -1011,7 +1000,7 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward RFFT32", fft_log_size, elapsed_time, count);
+    PrintResultNoSNR("Forward RFFT32", fft_log_size, elapsed_time, count);
   }
 
   if (do_inverse_test) {
@@ -1054,7 +1043,7 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse RFFT32", fft_log_size, elapsed_time, count);
+    PrintResultNoSNR("Inverse RFFT32", fft_log_size, elapsed_time, count);
   }
 
   FreeAlignedPointer(x_aligned);

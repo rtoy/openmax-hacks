@@ -54,7 +54,9 @@ void GetUserTime(struct timeval* time);
 double TimeDifference(const struct timeval * start,
                       const struct timeval * end);
 void PrintResult(const char* prefix, int fft_log_size, double elapsed_time,
-                 int count);
+                 int count, double snr);
+void PrintResultNoSNR(const char* prefix, int fft_log_size, double elapsed_time,
+                      int count);
 void PrintShortHeader(const char* message);
 int ComputeCount(int nominal_count, int fft_log_size);
 void GenerateRealFloatSignal(OMX_F32* x, void* fft, int size,

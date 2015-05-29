@@ -85,10 +85,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size);
 
-    PrintResult("Forward CkFFT FFT", fft_log_size, elapsed_time, count);
-
-    if (verbose > 0)
-      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+    PrintResult("Forward CkFFT FFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
 
     if (verbose >= 255) {
       printf("FFT Actual:\n");
@@ -131,10 +128,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
     if (verbose > 255)
       printf("Effective FFT time:  %g sec\n", elapsed_time);
 
-    PrintResult("Inverse CkFFT FFT", fft_log_size, elapsed_time, count);
-
-    if (verbose > 0) 
-      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+    PrintResult("Inverse CkFFT FFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
 
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
@@ -230,10 +224,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
       printf("FFT time          :  %g sec\n", elapsed_time);
     }
 
-    PrintResult("Forward CkFFT RFFT", fft_log_size, elapsed_time, count);
-
-    if (verbose > 0)
-      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+    PrintResult("Forward CkFFT RFFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
 
     if (verbose >= 255) {
       OMX_FC32* fft = (OMX_FC32*) y;
@@ -270,10 +261,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
       printf("IFFT time          :  %g sec\n", elapsed_time);
     }
 
-    PrintResult("Inverse CkFFT RFFT", fft_log_size, elapsed_time, count);
-
-    if (verbose > 0)
-      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+    PrintResult("Inverse CkFFT RFFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
 
     if (verbose >= 255) {
       printf("IFFT Actual:\n");

@@ -62,10 +62,7 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size);
 
-    PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count);
-
-    if (verbose > 0)
-      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+    PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
 
     if (verbose >= 255) {
       printf("FFT Actual:\n");
@@ -95,10 +92,7 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_inverse, (OMX_FC32*) z, (OMX_FC32*) x, fft_size);
 
-    PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count);
-
-    if (verbose > 0) 
-      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+    PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
 
     if (verbose >= 255) {
       printf("IFFT Actual:\n");

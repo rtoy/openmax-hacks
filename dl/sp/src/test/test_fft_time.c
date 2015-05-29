@@ -457,9 +457,22 @@ void PrintShortHeader(const char* message) {
 }
 
 void PrintResult(const char* prefix, int fft_log_size, double elapsed_time,
+                 int count, double snr) {
+  if (verbose == 0) {
+    printf("%2d\t%8.4f\t%8d\t%.4e # SNR = %g\n",
+           fft_log_size, elapsed_time, count, 1000 * elapsed_time / count, snr);
+  } else {
+    printf("%-18s:  order %2d:  %8.4f sec for %8d FFTs:  %.4e msec/FFT # SNR = %g\n",
+           prefix, fft_log_size, elapsed_time, count,
+           1000 * elapsed_time / count,
+           snr);
+  }
+}
+
+void PrintResultNoSNR(const char* prefix, int fft_log_size, double elapsed_time,
                  int count) {
   if (verbose == 0) {
-    printf("%2d\t%8.4f\t%8d\t%.4e\n",
+    printf("%2d\t%8.4f\t%8d\t%.4e",
            fft_log_size, elapsed_time, count, 1000 * elapsed_time / count);
   } else {
     printf("%-18s:  order %2d:  %8.4f sec for %8d FFTs:  %.4e msec/FFT\n",
