@@ -2,9 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#if defined(__arm__) || defined(__aarch64__)
-#include <arm_neon.h>
-#endif
 
 #include "dl/sp/api/armSP.h"
 #include "dl/sp/api/omxSP.h"
@@ -14,45 +11,6 @@
 #include "dl/sp/src/test/timing_util.h"
 
 #include "../../../../third_party/other-fft/pffft/pffft.h"
-
-/*
- * Scale FFT data by 1/|fftSize|. |length| is the length of the vector.
- */
-static inline void ScaleVector(OMX_F32* vectorData, unsigned length, unsigned fftSize) {
-#if defined(__arm__) || defined(__aarch64__)
-  float32_t* data = (float32_t*)vectorData;
-  float32_t scale = 1.0f / fftSize;
-
-  if (length >= 4) {
-    /*
-     * Do 4 float elements at a time because |length| is always a
-     * multiple of 4 when |length| >= 4.
-     *
-     * TODO(rtoy): Figure out how to process 8 elements at a time
-     * using intrinsics or replace this with inline assembly.
-     */
-    do {
-      float32x4_t x = vld1q_f32(data);
-
-      length -= 4;
-      x = vmulq_n_f32(x, scale);
-      vst1q_f32(data, x);
-      data += 4;
-    } while (length > 0);
-  } else if (length == 2) {
-    float32x2_t x = vld1_f32(data);
-    x = vmul_n_f32(x, scale);
-    vst1_f32(data, x);
-  } else {
-    vectorData[0] *= scale;
-  }
-#else
-  float scale = 1.0f / fftSize;
-  for (m = 0; m < length; ++m) {
-      vectorData[m] *= scale;
-  }
-#endif
-}
 
 void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
                      int signal_type) {
