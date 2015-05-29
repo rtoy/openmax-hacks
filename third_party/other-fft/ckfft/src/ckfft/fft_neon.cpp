@@ -25,8 +25,6 @@ void fft_neon(
 {
     if (count == 4)
     {
-        // TODO vectorize?
-
         const CkFftComplex* in = input;
         CkFftComplex* out = output;
         CkFftComplex* outEnd = out + 4;
@@ -85,30 +83,29 @@ void fft_neon(
         int expTableStride1 = stride * expTableStride;
         const CkFftComplex* exp = expTable;
 
-        float32x2x2_t f1w_v, f2w2_v, f3w3_v;
-        float32x2x2_t sum02_v, diff02_v, sum13_v, diff13_v;
-
         CkFftComplex* out0 = output;
         CkFftComplex* out1 = out0 + 2;
         CkFftComplex* out2 = out1 + 2;
         CkFftComplex* out3 = out2 + 2;
 
-        float32x2x2_t out0_v = vld2_f32((const float*) out0);
-        float32x2x2_t out1_v = vld2_f32((const float*) out1);
-        float32x2x2_t out2_v = vld2_f32((const float*) out2);
-        float32x2x2_t out3_v = vld2_f32((const float*) out3);
+        float32x2x2_t f1w_v, f2w2_v, f3w3_v;
+        float32x2x2_t sum02_v, diff02_v, sum13_v, diff13_v;
 
-        float32x2x2_t exp1_v;
-        exp1_v = vld2_lane_f32((const float*) exp, exp1_v, 0);
-        exp1_v = vld2_lane_f32((const float*) (exp + expTableStride1), exp1_v, 1);
+        float32x2x2_t out0_v = vld2_f32((const float32_t*) out0);
+        float32x2x2_t out1_v = vld2_f32((const float32_t*) out1);
+        float32x2x2_t out2_v = vld2_f32((const float32_t*) out2);
+        float32x2x2_t out3_v = vld2_f32((const float32_t*) out3);
 
-        float32x2x2_t exp2_v;
-        exp2_v = vld2_lane_f32((const float*) exp, exp2_v, 0);
-        exp2_v = vld2_lane_f32((const float*) (exp + expTableStride1*2), exp2_v, 1);
-
-        float32x2x2_t exp3_v;
-        exp3_v = vld2_lane_f32((const float*) exp, exp3_v, 0);
-        exp3_v = vld2_lane_f32((const float*) (exp + expTableStride1*3), exp3_v, 1);
+        float32x2x2_t exp1_v, exp2_v, exp3_v;
+        exp1_v = vld2_lane_f32((const float32_t*) exp, exp1_v, 0);
+        exp += expTableStride1;
+        exp1_v = vld2_lane_f32((const float32_t*) exp, exp1_v, 1);
+        exp2_v = exp1_v;
+        exp += expTableStride1;
+        exp2_v = vld2_lane_f32((const float32_t*) exp, exp2_v, 1);
+        exp3_v = exp1_v;
+        exp += expTableStride1;
+        exp3_v = vld2_lane_f32((const float32_t*) exp, exp3_v, 1);
 
         multiply(out1_v, exp1_v, f1w_v);
         multiply(out2_v, exp2_v, f2w2_v);
@@ -138,10 +135,10 @@ void fft_neon(
             out3_v.val[1] = vadd_f32(diff02_v.val[1], diff13_v.val[0]);
         }
 
-        vst2_f32((float*) out0, out0_v);
-        vst2_f32((float*) out1, out1_v);
-        vst2_f32((float*) out2, out2_v);
-        vst2_f32((float*) out3, out3_v);
+        vst2_f32((float32_t*) out0, out0_v);
+        vst2_f32((float32_t*) out1, out1_v);
+        vst2_f32((float32_t*) out2, out2_v);
+        vst2_f32((float32_t*) out3, out3_v);
     }
     else
     {
@@ -167,50 +164,51 @@ void fft_neon(
         int expTableStride2 = expTableStride1 * 2;
         int expTableStride3 = expTableStride1 * 3;
 
-        float32x4x2_t f1w_v, f2w2_v, f3w3_v;
-        float32x4x2_t sum02_v, diff02_v, sum13_v, diff13_v;
-
         CkFftComplex* out0 = output;
         CkFftComplex* out1 = out0 + n;
         CkFftComplex* out2 = out1 + n;
         CkFftComplex* out3 = out2 + n;
 
+        float32x4x2_t f1w_v, f2w2_v, f3w3_v;
+        float32x4x2_t sum02_v, diff02_v, sum13_v, diff13_v;
+
+
         int m = n/4;
         for (int i = 0; i < m; ++i)
         {
-            float32x4x2_t out0_v = vld2q_f32((const float*) out0);
-            float32x4x2_t out1_v = vld2q_f32((const float*) out1);
-            float32x4x2_t out2_v = vld2q_f32((const float*) out2);
-            float32x4x2_t out3_v = vld2q_f32((const float*) out3);
+            float32x4x2_t out0_v = vld2q_f32((const float32_t*) out0);
+            float32x4x2_t out1_v = vld2q_f32((const float32_t*) out1);
+            float32x4x2_t out2_v = vld2q_f32((const float32_t*) out2);
+            float32x4x2_t out3_v = vld2q_f32((const float32_t*) out3);
 
             float32x4x2_t exp1_v;
-            exp1_v = vld2q_lane_f32((const float*) exp1, exp1_v, 0);
+            exp1_v = vld2q_lane_f32((const float32_t*) exp1, exp1_v, 0);
             exp1 += expTableStride1;
-            exp1_v = vld2q_lane_f32((const float*) exp1, exp1_v, 1);
+            exp1_v = vld2q_lane_f32((const float32_t*) exp1, exp1_v, 1);
             exp1 += expTableStride1;
-            exp1_v = vld2q_lane_f32((const float*) exp1, exp1_v, 2);
+            exp1_v = vld2q_lane_f32((const float32_t*) exp1, exp1_v, 2);
             exp1 += expTableStride1;
-            exp1_v = vld2q_lane_f32((const float*) exp1, exp1_v, 3);
+            exp1_v = vld2q_lane_f32((const float32_t*) exp1, exp1_v, 3);
             exp1 += expTableStride1;
 
             float32x4x2_t exp2_v;
-            exp2_v = vld2q_lane_f32((const float*) exp2, exp2_v, 0);
+            exp2_v = vld2q_lane_f32((const float32_t*) exp2, exp2_v, 0);
             exp2 += expTableStride2;
-            exp2_v = vld2q_lane_f32((const float*) exp2, exp2_v, 1);
+            exp2_v = vld2q_lane_f32((const float32_t*) exp2, exp2_v, 1);
             exp2 += expTableStride2;
-            exp2_v = vld2q_lane_f32((const float*) exp2, exp2_v, 2);
+            exp2_v = vld2q_lane_f32((const float32_t*) exp2, exp2_v, 2);
             exp2 += expTableStride2;
-            exp2_v = vld2q_lane_f32((const float*) exp2, exp2_v, 3);
+            exp2_v = vld2q_lane_f32((const float32_t*) exp2, exp2_v, 3);
             exp2 += expTableStride2;
 
             float32x4x2_t exp3_v;
-            exp3_v = vld2q_lane_f32((const float*) exp3, exp3_v, 0);
+            exp3_v = vld2q_lane_f32((const float32_t*) exp3, exp3_v, 0);
             exp3 += expTableStride3;
-            exp3_v = vld2q_lane_f32((const float*) exp3, exp3_v, 1);
+            exp3_v = vld2q_lane_f32((const float32_t*) exp3, exp3_v, 1);
             exp3 += expTableStride3;
-            exp3_v = vld2q_lane_f32((const float*) exp3, exp3_v, 2);
+            exp3_v = vld2q_lane_f32((const float32_t*) exp3, exp3_v, 2);
             exp3 += expTableStride3;
-            exp3_v = vld2q_lane_f32((const float*) exp3, exp3_v, 3);
+            exp3_v = vld2q_lane_f32((const float32_t*) exp3, exp3_v, 3);
             exp3 += expTableStride3;
 
             // TODO use vmla, vmls?
@@ -244,10 +242,10 @@ void fft_neon(
                 out3_v.val[1] = vaddq_f32(diff02_v.val[1], diff13_v.val[0]);
             }
 
-            vst2q_f32((float*) out0, out0_v);
-            vst2q_f32((float*) out1, out1_v);
-            vst2q_f32((float*) out2, out2_v);
-            vst2q_f32((float*) out3, out3_v);
+            vst2q_f32((float32_t*) out0, out0_v);
+            vst2q_f32((float32_t*) out1, out1_v);
+            vst2q_f32((float32_t*) out2, out2_v);
+            vst2q_f32((float32_t*) out3, out3_v);
 
             out0 += 4;
             out1 += 4;
