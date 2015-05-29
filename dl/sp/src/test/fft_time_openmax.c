@@ -900,7 +900,7 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
-  int scaleFactor;
+  int scaleFactor = 0;
 
   fft_size = 1 << fft_log_size;
 
