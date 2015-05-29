@@ -59,12 +59,6 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
   fft_size = 1 << fft_log_size;
 
-#if 0
-  if (!((fft_size == 16) || (fft_size == 64) || (fft_size == 256) || (fft_size == 1024))) {
-    fprintf(stderr, "NE10 FFT: invalid FFT size: %d\n", fft_size);
-    return;
-  }
-#endif
   x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * 2 * fft_size);
   z_aligned = AllocAlignedPointer(32, sizeof(*z) * 2 * fft_size);
@@ -187,12 +181,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   struct SnrResult snr_inverse;
 
   fft_size = 1 << fft_log_size;
-#if 0
-  if (!((fft_size == 128) || (fft_size == 512) || (fft_size == 2048))) {
-    fprintf(stderr, "NE10 RFFT: invalid FFT size: %d\n", fft_size);
-    return;
-  }
-#endif
+
   x_aligned = AllocAlignedPointer(32, sizeof(*x) * 4 * fft_size);
   /* The transformed value is in CCS format and is has fft_size + 2 values */
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * (4 * fft_size + 2));
