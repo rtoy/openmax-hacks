@@ -24,6 +24,7 @@
 
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 
+#if 0
 #define ENABLE_FIXED_POINT_FFT_TESTS
 
 #if defined(FLOAT_ONLY) || defined(ARM_VFP_TEST)
@@ -38,7 +39,7 @@ typedef enum {
   S16,
   S32,
 } s16_s32;
-
+#endif
 
 #define DEFINE_ONE_FFT(name) \
   void TimeOne ## name(int count, int fft_log_size, float signal_value, int signal_type)
