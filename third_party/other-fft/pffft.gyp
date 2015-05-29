@@ -1,3 +1,4 @@
+# See https://bitbucket.org/jpommier/pffft/overview
 {
   'targets': [
     {

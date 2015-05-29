@@ -1,3 +1,4 @@
+# See http://www.crickettechnology.com/ckfft
 {
   'targets': [
     {

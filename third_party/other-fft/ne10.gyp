@@ -1,3 +1,8 @@
+# See https://github.com/projectNe10/Ne10
+#
+# This only includes a subset of the routines from Ne10 and is
+# currently intended to be just enough to support (primarily) real
+# FFTs and complex FFTs.
 {
   'targets': [
     {
