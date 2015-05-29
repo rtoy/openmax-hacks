@@ -161,35 +161,35 @@ void TimeFFTUsage(char* prog) {
       "\n"
       "Most of the options listed after -T above are only applicable\n"
       "when -T is given to test just one FFT size and FFT type.\n"
-      "\n",
-      OPENMAX_COMPLEX_FLOAT,
+      "\n"
+      , OPENMAX_COMPLEX_FLOAT
 #if defined(__arm__) || defined(__aarch64__)
-      OPENMAX_REAL_FLOAT,
+      , OPENMAX_REAL_FLOAT
 #endif
 #ifdef ENABLE_FIXED_POINT_FFT_TESTS
-      OPENMAX_COMPLEX_16BIT,
-      OPENMAX_REAL_16BIT,
-      OPENMAX_COMPLEX_32BIT,
-      OPENMAX_REAL_32BIT,
+      , OPENMAX_COMPLEX_16BIT
+      , OPENMAX_REAL_16BIT
+      , OPENMAX_COMPLEX_32BIT
+      , OPENMAX_REAL_32BIT
 #endif
 #if defined(HAVE_KISSFFT)
-      KISSFFT_COMPLEX_FLOAT,
+      , KISSFFT_COMPLEX_FLOAT
 #endif
 #if defined(HAVE_NE10)
-     NE10_COMPLEX_FLOAT,
-     NE10_REAL_FLOAT,
+      , NE10_COMPLEX_FLOAT
+      , NE10_REAL_FLOAT
 #endif
 #if defined(HAVE_FFMPEG)
-     FFMPEG_COMPLEX_FLOAT,
-     FFMPEG_REAL_FLOAT,
+      , FFMPEG_COMPLEX_FLOAT
+      , FFMPEG_REAL_FLOAT
 #endif
 #if defined(HAVE_CKFFT)
-     CRICKET_COMPLEX_FLOAT,
-     CRICKET_REAL_FLOAT,
+      , CRICKET_COMPLEX_FLOAT
+      , CRICKET_REAL_FLOAT
 #endif
 #if defined(HAVE_PFFFT)
-     PFFFT_COMPLEX_FLOAT,
-     PFFFT_REAL_FLOAT
+      , PFFFT_COMPLEX_FLOAT
+      , PFFFT_REAL_FLOAT
 #endif
       );
   exit(0);
