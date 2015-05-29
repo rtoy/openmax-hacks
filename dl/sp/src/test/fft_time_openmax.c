@@ -909,6 +909,8 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
   struct timeval end_time;
   double elapsed_time;
   int scaleFactor = 0;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
 
   fft_size = 1 << fft_log_size;
 
@@ -1008,7 +1010,9 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResultNoSNR("Forward RFFT32", fft_log_size, elapsed_time, count);
+    CompareComplex32(&snr_forward, (OMX_SC32*) y, (OMX_SC32*) y_true, fft_size / 2 + 1);
+
+    PrintResult("Forward RFFT32", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
   }
 
   if (do_inverse_test) {
@@ -1030,7 +1034,7 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
           temp2[n] = factor * yrTrue[n];
         }
 
-        status = omxSP_FFTInv_CCSToR_S32_Sfs(y, z, fft_inv_spec, 0);
+        status = omxSP_FFTInv_CCSToR_S32_Sfs(y_true, z, fft_inv_spec, 0);
 
         /*
          * Spend some time converting the result back to float
@@ -1044,14 +1048,16 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
     } else {
       GetUserTime(&start_time);
       for (n = 0; n < count; ++n) {
-        status = omxSP_FFTInv_CCSToR_S32_Sfs(y, z, fft_inv_spec, 0);
+        status = omxSP_FFTInv_CCSToR_S32_Sfs(y_true, z, fft_inv_spec, 0);
       }
       GetUserTime(&end_time);
     }
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResultNoSNR("Inverse RFFT32", fft_log_size, elapsed_time, count);
+    CompareReal32(&snr_inverse, z, x, fft_size);
+
+    PrintResult("Inverse RFFT32", fft_log_size, elapsed_time, count, snr_inverse.real_snr_);
   }
 
   FreeAlignedPointer(x_aligned);
