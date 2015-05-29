@@ -52,55 +52,59 @@ typedef enum {
   S32,
 } s16_s32;
 
+
+#define DEFINE_ONE_FFT(name) \
+  void TimeOne ## name(int count, int fft_log_size, float signal_value, int signal_type)
+#define DEFINE_FFT(name) \
+  void Time ## name(int count, float signal_value, int signal_type)
+
+#define DEFINE_FFT_ROUTINES(base) \
+  DEFINE_FFT(base); \
+  DEFINE_ONE_FFT(base)
+
 #if defined(__arm__) || defined(__aarch64__)
-void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
-                     int signal_type);
-void TimeFloatFFT(int count, float signal_value, int signal_type);
+DEFINE_FFT_ROUTINES(FloatFFT);
 #endif
 
-void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
-                      int signal_type);
-void TimeFloatRFFT(int count, float signal_value, int signal_type);
+DEFINE_FFT_ROUTINES(FloatRFFT);
 
 #ifdef ENABLE_FIXED_POINT_FFT_TESTS
-void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
-                    int signal_type);
-void TimeSC16FFT(int count, float signal_value, int signal_type);
+DEFINE_FFT_ROUTINES(SC16FFT);
+DEFINE_FFT_ROUTINES(SC32FFT);
+DEFINE_FFT_ROUTINES(RFFT32);
+/*
+ * TimeOneRFFT16 has an extra arg to tell us what algorithm the RFFT16
+ * method should use.  Perhaps this should be split out into two
+ * different routines?
+ */
+DEFINE_FFT(RFFT16);
 void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
                    int signal_type, s16_s32 s16s32);
-void TimeRFFT16(int count, float signal_value, int signal_type);
-void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
-                    int signal_type);
-void TimeSC32FFT(int count, float signal_value, int signal_type);
-void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
-                   int signal_type);
-void TimeRFFT32(int count, float signal_value, int signal_type);
 #endif
+
 #if defined(HAVE_NE10)
+/*
+ * The Ne10 routines need to be initialized befer than can be used.
+ * This routine must be called once to do that.
+ */
 void InitializeNE10();
-void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
-                    int signal_type);
-void TimeNE10FFT(int count, float signal_value, int signal_type);
-void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
-                     int signal_type);
-void TimeNE10RFFT(int count, float signal_value, int signal_type);
+
+DEFINE_FFT_ROUTINES(NE10FFT);
+DEFINE_FFT_ROUTINES(NE10RFFT);
 #endif
+
 #if defined(HAVE_CKFFT)
-void TimeCkFFTFFT(int count, float signal_value, int signal_type);
-void TimeCkFFTRFFT(int count, float signal_value, int signal_type);
-void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value, int signal_type);
-void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value, int signal_type);
+DEFINE_FFT_ROUTINES(CkFFTFFT);
+DEFINE_FFT_ROUTINES(CkFFTRFFT);
 #endif
+
 #if defined(HAVE_PFFFT)
-void TimePfFFT(int count, float signal_value, int signal_type);
-void TimePfRFFT(int count, float signal_value, int signal_type);
-void TimeOnePfFFT(int count, int fft_log_size, float signal_value, int signal_type);
-void TimeOnePfRFFT(int count, int fft_log_size, float signal_value, int signal_type);
+DEFINE_FFT_ROUTINES(PfFFT);
+DEFINE_FFT_ROUTINES(PfRFFT);
 #endif
 
 #if defined(HAVE_KISSFFT)
-void TimeKissFFT(int count, float signal_value, int signal_type);
-void TimeOneKissFFT(int count, int fft_log_size, float signal_value, int signal_type);
+DEFINE_FFT_ROUTINES(KissFFT);
 #endif
 
 int verbose = 1;
