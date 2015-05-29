@@ -9,7 +9,7 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 
-#include "../other-fft/kiss_fft130/kiss_fft.h"
+#include "../../../../third_party/other-fft/kiss_fft130/kiss_fft.h"
 
 extern int verbose;
 extern int include_conversion;
@@ -18,6 +18,15 @@ extern int do_forward_test;
 extern int do_inverse_test;
 extern int min_fft_order;
 extern int max_fft_order;
+
+void GetUserTime(struct timeval* time);
+double TimeDifference(const struct timeval * start,
+                      const struct timeval * end);
+void PrintResult(const char* prefix, int fft_log_size, double elapsed_time,
+                 int count);
+int ComputeCount(int nominal_count, int fft_log_size);
+void GenerateRealFloatSignal(OMX_F32* x, void* fft, int size,
+                             int signal_type, float signal_value);
 
 void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
                      int signal_type) {
@@ -65,7 +74,7 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
@@ -92,7 +101,7 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count, verbose);
+    PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count);
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
       DumpArrayComplexFloat("z", fft_size, (OMX_FC32*) z);
@@ -117,7 +126,7 @@ void TimeKissFFT(int count, float signal_value, int signal_type) {
     printf("%s Kiss FFT\n", do_forward_test ? "Forward" : "Inverse");
   
   for (k = min_fft_order; k <= max_fft_order; ++k) {
-    int testCount = ComputeCount(count, k, adapt_count);
+    int testCount = ComputeCount(count, k);
     TimeOneKissFFT(testCount, k, signal_value, signal_type);
   }
 }

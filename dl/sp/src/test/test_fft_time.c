@@ -77,6 +77,7 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
 void TimeRFFT32(int count, float signal_value, int signal_type);
 #endif
 #if defined(HAVE_NE10)
+void InitializeNE10();
 void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
                     int signal_type);
 void TimeNE10FFT(int count, float signal_value, int signal_type);
@@ -97,8 +98,9 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value, int signal_ty
 void TimeOnePfRFFT(int count, int fft_log_size, float signal_value, int signal_type);
 #endif
 
-#if defined(HAVE_NE10)
-void InitializeNE10();
+#if defined(HAVE_KISSFFT)
+void TimeKissFFT(int count, float signal_value, int signal_type);
+void TimeOneKissFFT(int count, int fft_log_size, float signal_value, int signal_type);
 #endif
 
 int verbose = 1;
