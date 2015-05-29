@@ -40,7 +40,6 @@ typedef enum {
 
 extern int verbose;
 extern int include_conversion;
-extern int adapt_count;
 extern int do_forward_test;
 extern int do_inverse_test;
 extern int min_fft_order;
