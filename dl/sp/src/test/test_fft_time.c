@@ -21,25 +21,10 @@
 #include "dl/sp/src/test/aligned_ptr.h"
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
+#include "dl/sp/src/test/timing_util.h"
 
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 
-#if 0
-#define ENABLE_FIXED_POINT_FFT_TESTS
-
-#if defined(FLOAT_ONLY) || defined(ARM_VFP_TEST)
-/*
- * Fixed-point FFTs are disabled if we only want float tests or if
- * we're building for non-NEON tests.
- */
-#undef ENABLE_FIXED_POINT_FFT_TESTS
-#endif
-
-typedef enum {
-  S16,
-  S32,
-} s16_s32;
-#endif
 
 #define DEFINE_ONE_FFT(name) \
   void TimeOne ## name(int count, int fft_log_size, float signal_value, int signal_type)
