@@ -243,12 +243,13 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
   OMX_SC32* x;
   OMX_SC32* y;
   OMX_SC32* z;
+  OMX_SC32* y_true;
 
   struct AlignedPtr* x_aligned;
   struct AlignedPtr* y_aligned;
   struct AlignedPtr* z_aligned;
 
-  OMX_SC32* y_true;
+  struct AlignedPtr* y_true_aligned;
   OMX_SC32* temp32a;
   OMX_SC32* temp32b;
 
@@ -260,19 +261,22 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
 
   fft_size = 1 << fft_log_size;
 
   x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * fft_size);
   z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
-  y_true = (OMX_SC32*) malloc(sizeof(*y_true) * fft_size);
+  y_true_aligned = AllocAlignedPointer(32, sizeof(*y_true) * fft_size);
   temp32a = (OMX_SC32*) malloc(sizeof(*temp32a) * fft_size);
   temp32b = (OMX_SC32*) malloc(sizeof(*temp32b) * fft_size);
 
   x = x_aligned->aligned_pointer_;
   y = y_aligned->aligned_pointer_;
   z = z_aligned->aligned_pointer_;
+  y_true = y_true_aligned->aligned_pointer_;
 
   generateSC32Signal(x, y_true, fft_size, signal_type, signal_value);
 
@@ -325,7 +329,9 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResultNoSNR("Forward SC32 FFT", fft_log_size, elapsed_time, count);
+    CompareComplex32(&snr_forward, y, y_true, fft_size);
+
+    PrintResult("Forward SC32 FFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
   }
 
   if (do_inverse_test) {
@@ -349,7 +355,7 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
           temp32a[n].Im = factor * x[n].Im;
         }
 
-        status = omxSP_FFTInv_CToC_SC32_Sfs(y, z, fft_inv_spec, 0);
+        status = omxSP_FFTInv_CToC_SC32_Sfs(y_true, z, fft_inv_spec, 0);
 
         factor = 1 / factor;
         for (n = 0; n < fft_size; ++n) {
@@ -361,14 +367,16 @@ void TimeOneSC32FFT(int count, int fft_log_size, float signal_value,
     } else {
       GetUserTime(&start_time);
       for (n = 0; n < count; ++n) {
-        status = omxSP_FFTInv_CToC_SC32_Sfs(y, z, fft_inv_spec, 0);
+        status = omxSP_FFTInv_CToC_SC32_Sfs(y_true, z, fft_inv_spec, 0);
       }
       GetUserTime(&end_time);
     }
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResultNoSNR("Inverse SC32 FFT", fft_log_size, elapsed_time, count);
+    CompareComplex32(&snr_inverse, z, x, fft_size);
+
+    PrintResult("Inverse SC32 FFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
   }
 
   FreeAlignedPointer(x_aligned);
