@@ -81,8 +81,7 @@ static inline void ScaleVector(OMX_F32* vectorData, unsigned length, unsigned ff
 
   if (length >= 4) {
     /*
-     * Do 4 float elements at a time because |length| is always a
-     * multiple of 4 when |length| >= 4.
+     * Do 4 float elements at a time because |length| when possible.
      *
      * TODO(rtoy): Figure out how to process 8 elements at a time
      * using intrinsics or replace this with inline assembly.
@@ -94,8 +93,9 @@ static inline void ScaleVector(OMX_F32* vectorData, unsigned length, unsigned ff
       x = vmulq_n_f32(x, scale);
       vst1q_f32(data, x);
       data += 4;
-    } while (length > 0);
-  } else if (length == 2) {
+    } while (length > 4);
+  }
+  if (length == 2) {
     float32x2_t x = vld1_f32(data);
     x = vmul_n_f32(x, scale);
     vst1_f32(data, x);
