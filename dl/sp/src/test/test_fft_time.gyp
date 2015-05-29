@@ -116,6 +116,7 @@
       'type': 'executable',
       'sources': [
         'test_fft_time.c',
+        'fft_time_openmax.c',
       ],
       'conditions': [
         ['kissfft == 1', {

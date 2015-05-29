@@ -11,24 +11,9 @@
 #include "dl/sp/src/test/aligned_ptr.h"
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
+#include "dl/sp/src/test/timing_util.h"
 
 #include "../../../../third_party/other-fft/pffft/pffft.h"
-
-extern int verbose;
-extern int include_conversion;
-extern int adapt_count;
-extern int do_forward_test;
-extern int do_inverse_test;
-extern int min_fft_order;
-extern int max_fft_order;
-void GetUserTime(struct timeval* time);
-double TimeDifference(const struct timeval * start,
-                      const struct timeval * end);
-void PrintResult(const char* prefix, int fft_log_size, double elapsed_time,
-                 int count);
-int ComputeCount(int nominal_count, int fft_log_size);
-void GenerateRealFloatSignal(OMX_F32* x, void* fft, int size,
-                             int signal_type, float signal_value);
 
 /*
  * Scale FFT data by 1/|fftSize|. |length| is the length of the vector.
