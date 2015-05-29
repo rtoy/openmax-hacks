@@ -208,6 +208,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       CkFftRealForward(fft_spec, fft_size, x, (CkFftComplex*)y);
+      ScaleVector(y, fft_size + 2, 2);
     }
     GetUserTime(&end_time);
 
@@ -224,7 +225,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
     if (verbose >= 255) {
       OMX_FC32* fft = (OMX_FC32*) y;
       printf("FFT Actual:\n");
-      DumpArrayComplexFloat("y", fft_size / 2, fft);
+      DumpArrayComplexFloat("y", fft_size / 2 + 1, fft);
       printf("FFT Expected:\n");
       DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
     }
