@@ -1,3 +1,4 @@
+# See http://sourceforge.net/projects/kissfft/
 {
   'targets': [
     {
