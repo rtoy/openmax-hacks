@@ -313,27 +313,27 @@ int main(int argc, char* argv[]) {
   } else {
     switch (fft_type) {
 #if defined(__arm__) || defined(__aarch64__)
-      case 0:
+      case OPENMAX_COMPLEX_FLOAT:
         if (time_all_orders)
           TimeFloatFFT(count, signal_value, signal_type);
         else
           TimeOneFloatFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
-      case 1:
+      case OPENMAX_REAL_FLOAT:
         if (time_all_orders)
           TimeFloatRFFT(count, signal_value, signal_type);
         else
           TimeOneFloatRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #ifdef ENABLE_FIXED_POINT_FFT_TESTS
-      case 2:
+      case OPENMAX_COMPLEX_16BIT:
         if (time_all_orders)
           TimeSC16FFT(count, signal_value, signal_type);
         else
           TimeOneSC16FFT(count, fft_log_size, signal_value, signal_type);
         break;
-      case 3:
+      case OPENMAX_REAL_16BIT:
         if (time_all_orders) {
           TimeRFFT16(count, signal_value, signal_type);
         } else {
@@ -341,13 +341,13 @@ int main(int argc, char* argv[]) {
           TimeOneRFFT16(count, fft_log_size, signal_value, signal_type, S16);
         }
         break;
-      case 4:
+      case OPENMAX_COMPLEX_32BIT:
         if (time_all_orders)
           TimeSC32FFT(count, signal_value, signal_type);
         else
           TimeOneSC32FFT(count, fft_log_size, signal_value, signal_type);
         break;
-      case 5:
+      case OPENMAX_REAL_32BIT:
         if (time_all_orders)
           TimeRFFT32(count, signal_value, signal_type);
         else
@@ -355,7 +355,7 @@ int main(int argc, char* argv[]) {
         break;
 #endif
 #if defined(HAVE_KISSFFT)
-      case 6:
+      case KISSFFT_COMPLEX_FLOAT:
         if (time_all_orders)
           TimeKissFFT(count, signal_value, signal_type);
         else
@@ -363,13 +363,13 @@ int main(int argc, char* argv[]) {
         break;
 #endif
 #if defined(HAVE_NE10)
-      case 7:
+      case NE10_COMPLEX_FLOAT:
         if (time_all_orders)
           TimeNE10FFT(count, signal_value, signal_type);
         else
           TimeOneNE10FFT(count, fft_log_size, signal_value, signal_type);
         break;
-      case 8:
+      case NE10_REAL_FLOAT:
         if (time_all_orders)
           TimeNE10FFT(count, signal_value, signal_type);
         else
@@ -377,13 +377,13 @@ int main(int argc, char* argv[]) {
         break;
 #endif
 #if defined(HAVE_FFMPEG)
-      case 9:
+      case FFPMEG_COMPLEX_FLOAT:
         if (time_all_orders)
           TimeFFmpegFFT(count, signal_value, signal_type);
         else
           TimeOneFFmpegFFT(count, fft_log_size, signal_value, signal_type);
         break;
-      case 10:
+      case FFPMEG_REAL_FLOAT:
         if (time_all_orders)
           TimeFFmpegRFFT(count, signal_value, signal_type);
         else
@@ -391,7 +391,7 @@ int main(int argc, char* argv[]) {
         break;
 #endif
 #if defined(HAVE_CKFFT)
-      case 11:
+      case CRICKET_COMPLEX_FLOAT:
         if (time_all_orders)
           TimeCkFFTFFT(count, signal_value, signal_type);
         else
@@ -399,7 +399,7 @@ int main(int argc, char* argv[]) {
         break;
 #endif
 #if defined(HAVE_CKFFT)
-      case 12:
+      case CRICKET_REAL_FLOAT:
         if (time_all_orders)
           TimeCkFFTRFFT(count, signal_value, signal_type);
         else
@@ -407,13 +407,13 @@ int main(int argc, char* argv[]) {
         break;
 #endif
 #if defined(HAVE_PFFFT)
-      case 13:
+      case PFFFT_COMPLEX_FLOAT:
         if (time_all_orders)
           TimePfFFT(count, signal_value, signal_type);
         else
           TimeOnePfFFT(count, fft_log_size, signal_value, signal_type);
         break;
-      case 14:
+      case PFFFT_REAL_FLOAT:
         if (time_all_orders)
           TimePfRFFT(count, signal_value, signal_type);
         else
