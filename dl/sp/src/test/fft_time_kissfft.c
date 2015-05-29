@@ -47,6 +47,8 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
 
   fft_size = 1 << fft_log_size;
 
@@ -74,7 +76,13 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size);
+
     PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count);
+
+    if (verbose > 0)
+      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+
     if (verbose >= 255) {
       printf("FFT Actual:\n");
       DumpArrayComplexFloat("y", fft_size, (OMX_FC32*) y);
@@ -101,7 +109,13 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareComplexFloat(&snr_inverse, (OMX_FC32*) z, (OMX_FC32*) x, fft_size);
+
     PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count);
+
+    if (verbose > 0) 
+      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
+
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
       DumpArrayComplexFloat("z", fft_size, (OMX_FC32*) z);
