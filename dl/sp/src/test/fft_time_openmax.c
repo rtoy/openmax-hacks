@@ -450,6 +450,8 @@ void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
 
   fft_size = 1 << fft_log_size;
 
@@ -515,7 +517,9 @@ void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResultNoSNR("Forward SC16 FFT", fft_log_size, elapsed_time, count);
+    CompareComplex16(&snr_forward, y, y_true, fft_size);
+
+    PrintResult("Forward SC16 FFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
   }
 
   if (do_inverse_test) {
