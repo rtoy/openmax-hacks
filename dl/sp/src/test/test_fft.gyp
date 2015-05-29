@@ -124,6 +124,7 @@
           ],
           'sources': [
             'test_fft_time.c',
+            'fft_time_openmax.c',
           ],
         },
       ],
@@ -196,6 +197,7 @@
       'type': 'executable',
       'sources': [
         'test_fft_time.c',
+        'fft_time_openmax.c',
       ],
       'conditions': [
         ['target_arch == "ia32" or target_arch == "x64" or target_arch == "arm64" or target_arch == "mipsel"', {
