@@ -48,8 +48,6 @@ void fft_real(CkFftContext* context,
     }
     else
     {
-#if 1
-        // NEON enabled
         if (context->neon)
         {
             fft_real_neon(context, input, output, count);
@@ -58,9 +56,6 @@ void fft_real(CkFftContext* context,
         {
             fft_real_default(context, input, output, count);
         }
-#else
-        fft_real_default(context, input, output, count);
-#endif
     }
 }
 
@@ -98,8 +93,6 @@ void fft_real_inverse(CkFftContext* context,
     }
     else
     {
-#if 1
-        // NEON enabled
         if (context->neon)
         {
             fft_real_inverse_neon(context, input, output, count, tmpBuf);
@@ -108,9 +101,6 @@ void fft_real_inverse(CkFftContext* context,
         {
             fft_real_inverse_default(context, input, output, count, tmpBuf);
         }
-#else
-        fft_real_inverse_default(context, input, output, count, tmpBuf);
-#endif
     }
 }
 

@@ -33,8 +33,7 @@ void fft(CkFftContext* context,
     {
         const CkFftComplex* expTable = (inverse ? context->invExpTable : context->fwdExpTable);
         int expTableStride = context->maxCount / count;
-#if 1
-        // NEON enabled
+
         if (context->neon)
         {
             fft_neon(context, input, output, count, inverse, 1, expTable, expTableStride);
@@ -43,9 +42,6 @@ void fft(CkFftContext* context,
         {
             fft_default(context, input, output, count, inverse, 1, expTable, expTableStride);
         }
-#else
-        fft_default(context, input, output, count, inverse, 1, expTable, expTableStride);
-#endif
     }
 }
 
