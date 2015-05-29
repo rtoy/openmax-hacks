@@ -25,8 +25,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
   struct ComplexFloat* y_true;
 
   int n;
-  CkFftContext* fft_fwd_spec = NULL;;
-  CkFftContext* fft_inv_spec = NULL;
+  CkFftContext* fft_spec = NULL;;
   int fft_size;
   struct timeval start_time;
   struct timeval end_time;
@@ -49,8 +48,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
 
   GenerateTestSignalAndFFT(x, y_true, fft_size, signal_type, signal_value, 0);
 
-  fft_fwd_spec = CkFftInit(fft_size, kCkFftDirection_Forward, NULL, NULL);
-  fft_inv_spec = CkFftInit(fft_size, kCkFftDirection_Inverse, NULL, NULL);
+  fft_spec = CkFftInit(fft_size, kCkFftDirection_Both, NULL, NULL);
 
   /*
    * Measure how much time we spend doing copies, so we can subtract
@@ -67,7 +65,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       memcpy(y, x, sizeof(*y) * fft_size);
-      CkFftComplexForward(fft_fwd_spec, fft_size, (CkFftComplex*) x, (CkFftComplex*) y);
+      CkFftComplexForward(fft_spec, fft_size, (CkFftComplex*) x, (CkFftComplex*) y);
     }
     GetUserTime(&end_time);
 
@@ -103,7 +101,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
       int m;
       
       memcpy(z, y_true, sizeof(*z) * fft_size);
-      CkFftComplexInverse(fft_inv_spec, fft_size, (CkFftComplex*) y, (CkFftComplex*) z);
+      CkFftComplexInverse(fft_spec, fft_size, (CkFftComplex*) y, (CkFftComplex*) z);
 
       // CkFftComplexInverse doesn't scale the inverse by 1/N, so we
       // need to do it since the other FFTs do.
@@ -142,8 +140,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
   FreeAlignedPointer(y_aligned);
   FreeAlignedPointer(z_aligned);
   free(y_true);
-  free(fft_fwd_spec);
-  free(fft_inv_spec);
+  CkFftShutdown(fft_spec);
 }
 
 void TimeCkFFTFFT(int count, float signal_value, int signal_type) {
@@ -173,8 +170,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
 
 
   int n;
-  CkFftContext* fft_fwd_spec = NULL;;
-  CkFftContext* fft_inv_spec = NULL;
+  CkFftContext* fft_spec = NULL;;
   int fft_size;
   struct timeval start_time;
   struct timeval end_time;
@@ -200,10 +196,9 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
   GenerateRealFloatSignal(x, (struct ComplexFloat*) y_true, fft_size, signal_type,
                           signal_value);
 
-  fft_fwd_spec = CkFftInit(fft_size, kCkFftDirection_Forward, NULL, NULL);
-  fft_inv_spec = CkFftInit(fft_size, kCkFftDirection_Inverse, NULL, NULL);
+  fft_spec = CkFftInit(fft_size, kCkFftDirection_Both, NULL, NULL);
 
-  if (!fft_fwd_spec || !fft_inv_spec) {
+  if (!fft_spec) {
     fprintf(stderr, "TimeOneCkFFTRFFT:  Could not initialize structures for order %d\n",
             fft_log_size);
     return;
@@ -212,7 +207,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
   if (do_forward_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      CkFftRealForward(fft_fwd_spec, fft_size, x, (CkFftComplex*)y);
+      CkFftRealForward(fft_spec, fft_size, x, (CkFftComplex*)y);
     }
     GetUserTime(&end_time);
 
@@ -242,7 +237,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
     for (n = 0; n < count; ++n) {
       int m;
       
-      CkFftRealInverse(fft_inv_spec, fft_size, (CkFftComplex*)y, z, (CkFftComplex*) tmp);
+      CkFftRealInverse(fft_spec, fft_size, (CkFftComplex*)y, z, (CkFftComplex*) tmp);
 
       // CkFftComplexInverse doesn't scale the inverse by 1/N, so we
       // need to do it since the other FFTs do.
@@ -275,8 +270,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
   FreeAlignedPointer(y_aligned);
   FreeAlignedPointer(z_aligned);
   free(tmp);
-  free(fft_fwd_spec);
-  free(fft_inv_spec);
+  CkFftShutdown(fft_spec);
 }
 
 void TimeCkFFTRFFT(int count, float signal_value, int signal_type) {
