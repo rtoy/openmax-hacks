@@ -562,7 +562,9 @@ void TimeOneSC16FFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    PrintResultNoSNR("Inverse SC16 FFT", fft_log_size, elapsed_time, count);
+    CompareComplex16(&snr_inverse, z, x, fft_size);
+
+    PrintResult("Inverse SC16 FFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
   }
 
   FreeAlignedPointer(x_aligned);
