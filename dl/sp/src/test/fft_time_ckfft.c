@@ -9,7 +9,7 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 
-#include "../../../../third_party/other-fft/ckfft-1.0/inc/ckfft/ckfft.h"
+#include "../../../../third_party/other-fft/ckfft/inc/ckfft/ckfft.h"
 
 extern int verbose;
 extern int include_conversion;
