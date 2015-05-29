@@ -508,6 +508,8 @@ void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
 
   fft_size = 1 << fft_log_size;
 
@@ -539,7 +541,12 @@ void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size);
+
     PrintResult("Forward Float FFT", fft_log_size, elapsed_time, count);
+    if (verbose > 0)
+      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
+
   }
 
   if (do_inverse_test) {
@@ -551,7 +558,12 @@ void TimeOneFloatFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareComplexFloat(&snr_inverse, (OMX_FC32*) z, (OMX_FC32*) x, fft_size);
+
     PrintResult("Inverse Float FFT", fft_log_size, elapsed_time, count);
+
+    if (verbose > 0) 
+      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
   }
 
   FreeAlignedPointer(x_aligned);
@@ -627,6 +639,8 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
+  struct SnrResult snr_forward;
+  struct SnrResult snr_inverse;
 
   fft_size = 1 << fft_log_size;
 
@@ -661,7 +675,12 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size / 2 + 1);
+
     PrintResult("Forward Float RFFT", fft_log_size, elapsed_time, count);
+
+    if (verbose > 0)
+      printf("  Forward SNR = %g\n", snr_forward.complex_snr_);
   }
 
   if (do_inverse_test) {
@@ -673,7 +692,11 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
+
     PrintResult("Inverse Float RFFT", fft_log_size, elapsed_time, count);
+    if (verbose > 0)
+      printf("  Inverse SNR = %g\n", snr_inverse.complex_snr_);
   }
 
   FreeAlignedPointer(x_aligned);
