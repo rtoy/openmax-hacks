@@ -93,13 +93,18 @@ static inline void ScaleVector(OMX_F32* vectorData, unsigned length, unsigned ff
       x = vmulq_n_f32(x, scale);
       vst1q_f32(data, x);
       data += 4;
-    } while (length > 4);
-  }
-  if (length == 2) {
+    } while (length >= 4);
+      
+    if (length >= 2) {
+      float32x2_t x = vld1_f32(data);
+      x = vmul_n_f32(x, scale);
+      vst1_f32(data, x);
+    }
+  } else if (length >= 2) {
     float32x2_t x = vld1_f32(data);
     x = vmul_n_f32(x, scale);
     vst1_f32(data, x);
-  } else {
+  } else if (length >= 1) {
     vectorData[0] *= scale;
   }
 #else
