@@ -128,6 +128,7 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
   struct AlignedPtr* x_aligned;
   struct AlignedPtr* y_aligned;
   struct AlignedPtr* z_aligned;
+  struct AlignedPtr* y_true_aligned;
 
 
   OMX_INT n, fft_spec_buffer_size;
@@ -147,12 +148,12 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
   /* The transformed value is in CCS format and is has fft_size + 2 values */
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
   z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
+  y_true_aligned = AllocAlignedPointer(32, sizeof(*z) * (fft_size + 2));
 
   x = x_aligned->aligned_pointer_;
   y = y_aligned->aligned_pointer_;
   z = z_aligned->aligned_pointer_;
-
-  y_true = (OMX_F32*) malloc(sizeof(*y_true) * (fft_size + 2));
+  y_true = y_true_aligned->aligned_pointer_;
 
   GenerateRealFloatSignal(x, (OMX_FC32*) y_true, fft_size, signal_type,
                           signal_value);
@@ -182,7 +183,7 @@ void TimeOneFloatRFFT(int count, int fft_log_size, float signal_value,
   if (do_inverse_test) {
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      INVERSE_FLOAT_RFFT(y, z, fft_inv_spec);
+      INVERSE_FLOAT_RFFT(y_true, z, fft_inv_spec);
     }
     GetUserTime(&end_time);
 
