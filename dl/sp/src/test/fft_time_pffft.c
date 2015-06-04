@@ -17,6 +17,7 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
   struct AlignedPtr* x_aligned;
   struct AlignedPtr* y_aligned;
   struct AlignedPtr* z_aligned;
+  struct AlignedPtr* y_true_aligned;
 
   struct ComplexFloat* x;
   struct ComplexFloat* y;
@@ -38,12 +39,12 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
   x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
   z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
-
-  y_true = (struct ComplexFloat*) malloc(sizeof(*y_true) * fft_size);
+  y_true_aligned = AllocAlignedPointer(32, sizeof(*y_true) * fft_size);
 
   x = x_aligned->aligned_pointer_;
   y = y_aligned->aligned_pointer_;
   z = z_aligned->aligned_pointer_;
+  y_true = y_true_aligned->aligned_pointer_;
 
   s = pffft_new_setup(fft_size, PFFFT_COMPLEX);
   if (!s) {
@@ -82,7 +83,7 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
     for (n = 0; n < count; ++n) {
       int m;
       
-      pffft_transform_ordered(s, (float*)y, (float*)z, NULL, PFFFT_BACKWARD);
+      pffft_transform_ordered(s, (float*)y_true, (float*)z, NULL, PFFFT_BACKWARD);
       /*
        * Need to include cost of scaling the inverse
        */
@@ -107,8 +108,8 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
   FreeAlignedPointer(x_aligned);
   FreeAlignedPointer(y_aligned);
   FreeAlignedPointer(z_aligned);
+  FreeAlignedPointer(y_true_aligned);
   pffft_destroy_setup(s);
-  free(y_true);
 }
 
 void TimePfFFT(int count, float signal_value, int signal_type) {
@@ -168,7 +169,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
 
   s = pffft_new_setup(fft_size, PFFFT_REAL);
   if (!s) {
-    fprintf(stderr, "TimeOnePfFFT: Could not initialize structure for order %d\n",
+    fprintf(stderr, "TimeOnePfRFFT: Could not initialize structure for order %d\n",
             fft_log_size);
   }
 
@@ -183,13 +184,20 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
+    /*
+     * Arrange the output of the FFT to match the expected output.
+     */
+    y[fft_size / 2].Re = y[0].Im;
+    y[fft_size / 2].Im = 0;
+    y[0].Im = 0;
+
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size / 2 + 1);
 
-    PrintResult("Forward PFFFT FFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
+    PrintResult("Forward PFFFT RFFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
 
     if (verbose >= 255) {
       printf("FFT Actual:\n");
-      DumpArrayComplexFloat("y", fft_size / 2, (OMX_FC32*) y);
+      DumpArrayComplexFloat("y", fft_size / 2 + 1, (OMX_FC32*) y);
       printf("FFT Expected:\n");
       DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
     }
@@ -219,7 +227,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
 
     CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
 
-    PrintResult("Inverse PFFFT FFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
+    PrintResult("Inverse PFFFT RFFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
 
     if (verbose >= 255) {
       printf("IFFT Actual:\n");

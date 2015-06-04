@@ -222,7 +222,7 @@ void TimeKissRFFT(int count, float signal_value, int signal_type) {
   int k;
   
   if (verbose == 0)
-    printf("%s PFFFT RFFT\n", do_forward_test ? "Forward" : "Inverse");
+    printf("%s Kiss RFFT\n", do_forward_test ? "Forward" : "Inverse");
 
   for (k = min_fft_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
