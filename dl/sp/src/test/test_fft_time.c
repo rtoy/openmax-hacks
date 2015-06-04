@@ -78,6 +78,7 @@ DEFINE_FFT_ROUTINES(PfRFFT);
 
 #if defined(HAVE_KISSFFT)
 DEFINE_FFT_ROUTINES(KissFFT);
+DEFINE_FFT_ROUTINES(KissRFFT);
 #endif
 
 int verbose = 1;
@@ -129,7 +130,8 @@ void TimeFFTUsage(char* prog) {
       "              %2d - OpenMAX Real 32-bit\n"
 #endif
 #if defined(HAVE_KISSFFT)
-      "              %2d - KissFFT (complex)\n"
+      "              %2d - KissFFT complex float\n"
+      "              %2d - KissFFT real float\n"
 #endif
 #if defined(HAVE_NE10)
       "              %2d - NE10 complex float\n"
@@ -174,6 +176,7 @@ void TimeFFTUsage(char* prog) {
 #endif
 #if defined(HAVE_KISSFFT)
       , KISSFFT_COMPLEX_FLOAT
+      , KISSFFT_REAL_FLOAT
 #endif
 #if defined(HAVE_NE10)
       , NE10_COMPLEX_FLOAT
@@ -293,6 +296,7 @@ int main(int argc, char* argv[]) {
 #endif
 #if defined(HAVE_KISSFFT)
     TimeKissFFT(count, signal_value, signal_type);
+    TimeKissRFFT(count, signal_value, signal_type);
 #endif
 #if defined(HAVE_NE10)
     TimeNE10FFT(count, signal_value, signal_type);
@@ -360,6 +364,12 @@ int main(int argc, char* argv[]) {
           TimeKissFFT(count, signal_value, signal_type);
         else
           TimeOneKissFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+      case KISSFFT_REAL_FLOAT:
+        if (time_all_orders)
+          TimeKissRFFT(count, signal_value, signal_type);
+        else
+          TimeOneKissRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
 #if defined(HAVE_NE10)
