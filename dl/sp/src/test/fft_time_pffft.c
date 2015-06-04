@@ -134,6 +134,7 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
   struct AlignedPtr* x_aligned;
   struct AlignedPtr* y_aligned;
   struct AlignedPtr* z_aligned;
+  struct AlignedPtr* y_tmp_aligned;
 
   float* x;
   struct ComplexFloat* y;
@@ -156,13 +157,14 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
   x_aligned = AllocAlignedPointer(32, sizeof(*x) * fft_size);
   y_aligned = AllocAlignedPointer(32, sizeof(*y) * (fft_size + 2));
   z_aligned = AllocAlignedPointer(32, sizeof(*z) * fft_size);
+  y_tmp_aligned = AllocAlignedPointer(32, sizeof(*y_tmp) * (fft_size + 2));
 
   y_true = (float*) malloc(sizeof(*y_true) * 2 * fft_size);
-  y_tmp = (float*) malloc(sizeof(*y_tmp) * (fft_size + 2));
 
   x = x_aligned->aligned_pointer_;
   y = y_aligned->aligned_pointer_;
   z = z_aligned->aligned_pointer_;
+  y_tmp = y_tmp_aligned->aligned_pointer_;
 
   s = pffft_new_setup(fft_size, PFFFT_REAL);
   if (!s) {
@@ -230,9 +232,9 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
   FreeAlignedPointer(x_aligned);
   FreeAlignedPointer(y_aligned);
   FreeAlignedPointer(z_aligned);
+  FreeAlignedPointer(y_tmp_aligned);
   pffft_destroy_setup(s);
   free(y_true);
-  free(y_tmp);
 }
 
 void TimePfRFFT(int count, float signal_value, int signal_type) {
