@@ -220,17 +220,11 @@ void TimeOneKissRFFT(int count, int fft_log_size, float signal_value,
 
 void TimeKissRFFT(int count, float signal_value, int signal_type) {
   int k;
-  int min_order;
   
   if (verbose == 0)
     printf("%s PFFFT RFFT\n", do_forward_test ? "Forward" : "Inverse");
 
-  /*
-   * Orders less than 8 are not supported by PFFFT.
-   */
-  min_order = min_fft_order < 5 ? 5 : min_fft_order;
-  
-  for (k = min_order; k <= max_fft_order; ++k) {
+  for (k = min_fft_order; k <= max_fft_order; ++k) {
     int testCount = ComputeCount(count, k);
     TimeOneKissRFFT(testCount, k, signal_value, signal_type);
   }
