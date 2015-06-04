@@ -105,10 +105,7 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
 
       // CkFftComplexInverse doesn't scale the inverse by 1/N, so we
       // need to do it since the other FFTs do.
-      for (m = 0; m < fft_size; ++m) {
-        z[m].Re *= scale;
-        z[m].Im *= scale;
-      }
+      ScaleVector((OMX_F32*) z, 2 * fft_size, fft_size);
     }
     GetUserTime(&end_time);
 
@@ -242,10 +239,7 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
 
       // CkFftComplexInverse doesn't scale the inverse by 1/N, so we
       // need to do it since the other FFTs do.
-
-      for (m = 0; m < fft_size; ++m) {
-        z[m] *= scale;
-      }
+      ScaleVector(z, fft_size, fft_size);
     }
     GetUserTime(&end_time);
 
