@@ -8,16 +8,9 @@
 #include "dl/sp/src/test/aligned_ptr.h"
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
+#include "dl/sp/src/test/timing_util.h"
 
-#include "../other-fft/ffmpeg/libavcodec/avfft.h"
-
-extern int verbose;
-extern int include_conversion;
-extern int adapt_count;
-extern int do_forward_test;
-extern int do_inverse_test;
-extern int min_fft_order;
-extern int max_fft_order;
+#include "../../../../third_party/other-fft/ffmpeg/libavcodec/avfft.h"
 
 void TimeOneFFmpegFFT(int count, int fft_log_size, float signal_value,
                      int signal_type) {
