@@ -81,11 +81,7 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
       kiss_fft(fft_inv_spec, (kiss_fft_cpx*) y_true, z);
 
       // kiss_fft does not scale the inverse transform so do it here.
-      
-      for (k = 0; k < fft_size; ++k) {
-        z[k].r *= scale;
-        z[k].i *= scale;
-      }
+      ScaleVector((OMX_F32*) z, 2 * fft_size, fft_size);
     }
     GetUserTime(&end_time);
 
