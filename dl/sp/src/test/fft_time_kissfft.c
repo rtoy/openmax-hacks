@@ -132,7 +132,7 @@ void TimeOneKissRFFT(int count, int fft_log_size, float signal_value,
 
   kiss_fft_scalar* x;
   kiss_fft_cpx* y;
-  kiss_fft_cpx* z;
+  kiss_fft_scalar* z;
 
   struct ComplexFloat* y_true;
 
@@ -174,7 +174,7 @@ void TimeOneKissRFFT(int count, int fft_log_size, float signal_value,
 
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size / 2 + 1);
 
-    PrintResult("Forward Kiss FFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
+    PrintResult("Forward Kiss RFFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
 
     if (verbose >= 255) {
       printf("FFT Actual:\n");
@@ -184,38 +184,31 @@ void TimeOneKissRFFT(int count, int fft_log_size, float signal_value,
     }
   }
 
-#if 0
   if (do_inverse_test) {
     double scale = 1.0 / fft_size;
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
       int k;
-      kiss_fftr(fft_inv_spec, (kiss_fft_cpx*) y_true, z);
+      kiss_fftri(fft_inv_spec, (kiss_fft_cpx*) y_true, z);
 
       // kiss_fft does not scale the inverse transform so do it here.
-      
-      for (k = 0; k < fft_size; ++k) {
-        z[k].r *= scale;
-        z[k].i *= scale;
-      }
+      ScaleVector(z, fft_size, fft_size);
     }
     GetUserTime(&end_time);
 
     elapsed_time = TimeDifference(&start_time, &end_time);
 
-    CompareComplexFloat(&snr_inverse, (OMX_FC32*) z, (OMX_FC32*) x, fft_size);
+    CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
 
-    PrintResult("Inverse Kiss FFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
+    PrintResult("Inverse Kiss RFFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
 
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
-      DumpArrayComplexFloat("z", fft_size, (OMX_FC32*) z);
+      DumpArrayFloat("z", fft_size, z);
       printf("IFFT Expected:\n");
-      DumpArrayComplexFloat("x", fft_size, (OMX_FC32*) x);
-      printf("%4s\t%10s.re[n]\t%10s.im[n]\n", "n", "z", "z");
+      DumpArrayFloat("x", fft_size, x);
     }
   }
-#endif
 
   FreeAlignedPointer(x_aligned);
   FreeAlignedPointer(y_aligned);
