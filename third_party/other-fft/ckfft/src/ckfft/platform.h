@@ -20,7 +20,7 @@
 #  define CKFFT_PLATFORM_WIN 1
 #endif
 
-#if __arm__ && __ARM_NEON__
+#if (__arm__ && __ARM_NEON__) || defined(__aarch64__)
 #  define CKFFT_ARM_NEON 1
 #endif
 
