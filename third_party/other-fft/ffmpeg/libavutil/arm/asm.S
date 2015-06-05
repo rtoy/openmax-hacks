@@ -34,6 +34,12 @@
 #   define T @
 #endif
 
+#if HAVE_AS_FUNC
+#   define FUNC
+#else
+#   define FUNC @
+#endif
+
 #if   HAVE_NEON
         .arch           armv7-a
 #elif HAVE_ARMV6T2
@@ -43,18 +49,25 @@
 #elif HAVE_ARMV5TE
         .arch           armv5te
 #endif
+#if   HAVE_AS_OBJECT_ARCH
+ELF     .object_arch    armv4
+#endif
 
 #if   HAVE_NEON
         .fpu            neon
-#elif HAVE_ARMVFP
+ELF     .eabi_attribute 10, 0           @ suppress Tag_FP_arch
+ELF     .eabi_attribute 12, 0           @ suppress Tag_Advanced_SIMD_arch
+#elif HAVE_VFP
         .fpu            vfp
+ELF     .eabi_attribute 10, 0           @ suppress Tag_FP_arch
 #endif
 
         .syntax unified
 T       .thumb
 ELF     .eabi_attribute 25, 1           @ Tag_ABI_align_preserved
+ELF     .section .note.GNU-stack,"",%progbits @ Mark stack as non-executable
 
-.macro  function name, export=0
+.macro  function name, export=0, align=2
         .set            .Lpic_idx, 0
         .set            .Lpic_gp, 0
     .macro endfunc
@@ -65,31 +78,38 @@ ELF     .eabi_attribute 25, 1           @ Tag_ABI_align_preserved
         .noaltmacro
       .endif
 ELF     .size   \name, . - \name
-        .endfunc
+FUNC    .endfunc
         .purgem endfunc
     .endm
         .text
-        .align          2
+        .align          \align
     .if \export
         .global EXTERN_ASM\name
+ELF     .type   EXTERN_ASM\name, %function
+FUNC    .func   EXTERN_ASM\name
 EXTERN_ASM\name:
-    .endif
+    .else
 ELF     .type   \name, %function
-        .func   \name
+FUNC    .func   \name
 \name:
+    .endif
 .endm
 
-.macro  const   name, align=2
+.macro  const   name, align=2, relocate=0
     .macro endconst
 ELF     .size   \name, . - \name
         .purgem endconst
     .endm
+.if HAVE_SECTION_DATA_REL_RO && \relocate
+        .section        .data.rel.ro
+.else
         .section        .rodata
+.endif
         .align          \align
 \name:
 .endm
 
-#if !HAVE_ARMV6T2
+#if !HAVE_ARMV6T2_EXTERNAL
 .macro  movw    rd, val
         mov     \rd, \val &  255
         orr     \rd, \val & ~255
@@ -97,7 +117,7 @@ ELF     .size   \name, . - \name
 #endif
 
 .macro  mov32   rd, val
-#if HAVE_ARMV6T2
+#if HAVE_ARMV6T2_EXTERNAL
         movw            \rd, #(\val) & 0xffff
     .if (\val) >> 16
         movt            \rd, #(\val) >> 16
@@ -146,7 +166,7 @@ T       ldr             \rd, [\rd]
 .macro  movrel rd, val
 #if CONFIG_PIC
         ldpic           \rd, \val
-#elif HAVE_ARMV6T2 && !defined(__APPLE__)
+#elif HAVE_ARMV6T2_EXTERNAL && !defined(__APPLE__)
         movw            \rd, #:lower16:\val
         movt            \rd, #:upper16:\val
 #else
@@ -210,6 +230,13 @@ T       ldr             \rt, [\rt]
 A       ldr             \rt, [\rn], \rm
 T       ldr             \rt, [\rn]
 T       add             \rn, \rn, \rm
+.endm
+
+.macro  ldrc_pre        cc,  rt,  rn,  rm:vararg
+A       ldr\cc          \rt, [\rn, \rm]!
+T       itt             \cc
+T       add\cc          \rn, \rn, \rm
+T       ldr\cc          \rt, [\rn]
 .endm
 
 .macro  ldrd_reg        rt,  rt2, rn,  rm
@@ -291,7 +318,7 @@ T       sub             \rn, \rn, \rm
 .endm
 
 #if HAVE_VFP_ARGS
-        .eabi_attribute 28, 1
+ELF     .eabi_attribute 28, 1
 #   define VFP
 #   define NOVFP @
 #else

@@ -16,19 +16,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef AVUTIL_ARM_CPU_H
-#define AVUTIL_ARM_CPU_H
-
-#include "config.h"
-#include "libavutil/cpu.h"
-#include "libavutil/cpu_internal.h"
-
-#define have_armv5te(flags) CPUEXT(flags, ARMV5TE)
-#define have_armv6(flags)   CPUEXT(flags, ARMV6)
-#define have_armv6t2(flags) CPUEXT(flags, ARMV6T2)
-#define have_vfp(flags)     CPUEXT(flags, VFP)
-#define have_vfpv3(flags)   CPUEXT(flags, VFPV3)
-#define have_neon(flags)    CPUEXT(flags, NEON)
-#define have_setend(flags)  CPUEXT(flags, SETEND)
-
-#endif /* AVUTIL_ARM_CPU_H */
+#define FFT_FLOAT 1
+#define FFT_FIXED_32 0
+#include "fft_template.c"
