@@ -10,11 +10,11 @@
   'variables' : {
     # Override this value to build with small float FFT tables
     'big_float_fft%' : 1,
-    # Include KissFFT.  Default is no.
+    # Include KissFFT.  Default is no. (Not available for arm64.)
     'kissfft%' : 0,
     # Include NE10 FFTs.  Default is no.
     'ne10%' : 0,
-    # Include FFMPEG FFTs.  Default is no.
+    # Include FFMPEG FFTs.  Default is no. (Not available for arm64.)
     'ffmpeg%' : 0,
     # Include CKFFT. Default is no.
     'ckfft%' : 0,
@@ -40,7 +40,7 @@
           'BIG_FFT_TABLE',
         ],
       }],
-      ['kissfft == 1', {
+      ['kissfft == 1 and target_arch == "arm"', {
         'defines': [
           'HAVE_KISSFFT',
         ],
@@ -56,7 +56,7 @@
           '../../../../third_party/other-fft/ne10.gyp:ne10',
         ]
       }],
-      ['ffmpeg == 1', {
+      ['ffmpeg == 1 and target_arch == "arm"', {
         'defines': [
           'HAVE_FFMPEG',
         ],
