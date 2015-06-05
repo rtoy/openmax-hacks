@@ -239,13 +239,20 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
     if (verbose > 255)
       printf("Effective FFT time:  %g sec\n", elapsed_time);
 
+    /*
+     * Arrange the output of the FFT to match the expected output.
+     */
+    y[fft_size] = y[1];
+    y[fft_size + 1] = 0;
+    y[1] = 0;
+
     CompareComplexFloat(&snr_forward, (OMX_FC32*) y, (OMX_FC32*) y_true, fft_size / 2 + 1);
 
     PrintResult("Forward FFmpeg RFFT", fft_log_size, elapsed_time, count, snr_forward.complex_snr_);
     if (verbose >= 255) {
       OMX_FC32* fft = (OMX_FC32*) y;
       printf("FFT Actual (FFMPEG packed format):\n");
-      DumpArrayComplexFloat("y", fft_size / 2, fft);
+      DumpArrayComplexFloat("y", fft_size / 2 + 1, fft);
       printf("FFT Expected:\n");
       DumpArrayComplexFloat("true", fft_size / 2 + 1, (OMX_FC32*) y_true);
     }
@@ -296,7 +303,9 @@ void TimeOneFFmpegRFFT(int count, int fft_log_size, float signal_value,
     if (verbose > 255)
       printf("Effective IFFT time:  %g sec\n", elapsed_time);
 
-    PrintResultNoSNR("Inverse FFmpeg RFFT", fft_log_size, elapsed_time, count);
+    CompareFloat(&snr_inverse, (OMX_F32*) z, (OMX_F32*) x, fft_size);
+    PrintResult("Inverse FFmpeg RFFT", fft_log_size, elapsed_time, count, snr_inverse.complex_snr_);
+
     if (verbose >= 255) {
       printf("IFFT Actual:\n");
       DumpArrayFloat("z", fft_size, z);
