@@ -15,10 +15,14 @@
 
 void InitializeNE10()
 {
+#if defined(__aarch64__)
+    ne10_init_dsp(1);
+#else 
   /* Need to initialize things if we have Ne10 available */
   extern int omxSP_HasArmNeon();
   extern ne10_result_t ne10_init_dsp (ne10_int32_t is_NEON_available);
   ne10_init_dsp(omxSP_HasArmNeon());
+#endif
 }
 
 void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
