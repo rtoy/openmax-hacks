@@ -81,6 +81,11 @@ DEFINE_FFT_ROUTINES(KissFFT);
 DEFINE_FFT_ROUTINES(KissRFFT);
 #endif
 
+#if defined(HAVE_FFMPEG)
+DEFINE_FFT_ROUTINES(FFmpegFFT);
+DEFINE_FFT_ROUTINES(FFmpegRFFT);
+#endif
+
 int verbose = 1;
 int do_forward_test = 1;
 int do_inverse_test = 1;
@@ -387,13 +392,13 @@ int main(int argc, char* argv[]) {
         break;
 #endif
 #if defined(HAVE_FFMPEG)
-      case FFPMEG_COMPLEX_FLOAT:
+      case FFMPEG_COMPLEX_FLOAT:
         if (time_all_orders)
           TimeFFmpegFFT(count, signal_value, signal_type);
         else
           TimeOneFFmpegFFT(count, fft_log_size, signal_value, signal_type);
         break;
-      case FFPMEG_REAL_FLOAT:
+      case FFMPEG_REAL_FLOAT:
         if (time_all_orders)
           TimeFFmpegRFFT(count, signal_value, signal_type);
         else
