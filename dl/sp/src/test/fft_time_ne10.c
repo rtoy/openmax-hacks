@@ -119,7 +119,7 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
     }
   }
 
-  free(fft_fwd_spec);
+  ne10_fft_destroy_c2c_float32(fft_fwd_spec);
   FreeAlignedPointer(x_aligned);
   FreeAlignedPointer(y_aligned);
   FreeAlignedPointer(z_aligned);
@@ -237,7 +237,7 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
     }
   }
 
-  free(fft_fwd_spec);
+  ne10_fft_destroy_r2c_float32(fft_fwd_spec);
   FreeAlignedPointer(x_aligned);
   FreeAlignedPointer(y_aligned);
   FreeAlignedPointer(z_aligned);
