@@ -20,6 +20,8 @@
     'ckfft%' : 0,
     # Include PFFFT. Default is no.
     'pffft%' : 0,
+    # Inline asm for Ne10 on arm64.
+    'ne10_arm64_inline_asm' : 0,
   },
   'target_defaults': {
     'include_dirs': [
@@ -51,6 +53,13 @@
       ['ne10 == 1', {
         'defines': [
           'HAVE_NE10',
+        ],
+        'conditions': [
+          'ne10_arm64_inline_asm == 1', {
+            'defines': [
+              'NE10_INLINE_ASM_OPT',
+            ],
+          },
         ],
         'dependencies' : [
           '../../../../third_party/other-fft/ne10.gyp:ne10',
