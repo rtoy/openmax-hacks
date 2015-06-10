@@ -22,11 +22,11 @@ This creates timing tests for the OpenMAX DL routines.  You can add
 the following flags to the gyp_chromium command line to enable tests
 with other FFTs:
 
- * -Dkissfft enables Kiss FFT
- * -Dne10 enables Ne10
- * -Dffmpeg enables FFMPEG
- * -Dckfft enables Cricket FFT
- * -Dpffft enables PFFFT
+ * `-Dkissfft` enables [Kiss FFT](http://sourceforge.net/projects/kissfft/)
+ * `-Dne10` enables [Ne10](https://github.com/projectNe10/Ne10)
+ * `-Dffmpeg` enables [FFMPEG](https://www.ffmpeg.org/)
+ * `-Dckfft` enables [Cricket FFT](http://www.crickettechnology.com/ckfft)
+ * `-Dpffft` enables [PFFFT](https://bitbucket.org/jpommier/pffft/overview)
 
 (Not all platforms support all of these options, but these should all
 work on an arm7 with NEON.)
