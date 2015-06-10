@@ -44,6 +44,7 @@ work on an arm7 with NEON.)
 Other useful options:
 
  * `target_arch=arm64` to create an arm64 build. (Default is arm.)
+ * `-Dne10_arm64_inline_asm` enables inline assembly for Ne10 arm64 builds.
 
 Instead of `test_fft_time.gyp`, you can also use `test_fft.gyp`.  The
 difference is that `test_fft_time.gyp` builds `test_fft_time` to do
