@@ -12,6 +12,14 @@ While the code can be used independently, this repo assumes that it is
 checked out inside a Chromium tree. In particular it should be cloned
 in the third_party directory.
 
+Thus
+
+```
+cd $CHROMIUM/src/third_party
+git clone https://github.com/rtoy/openmax-hacks.git
+cd openmax-hacks
+```
+
 ### Building
 
 Use
