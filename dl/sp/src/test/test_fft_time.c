@@ -386,7 +386,7 @@ int main(int argc, char* argv[]) {
         break;
       case NE10_REAL_FLOAT:
         if (time_all_orders)
-          TimeNE10FFT(count, signal_value, signal_type);
+          TimeNE10RFFT(count, signal_value, signal_type);
         else
           TimeOneNE10RFFT(count, fft_log_size, signal_value, signal_type);
         break;
