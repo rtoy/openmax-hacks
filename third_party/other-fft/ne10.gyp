@@ -59,6 +59,7 @@
             # We enable Neon instructions even with arm_neon==0, to support
             # runtime detection.
             '-mfpu=neon',
+            '-funsafe-math-optimizations',
           ],
         }],
         ['target_arch=="arm64"', {
