@@ -306,9 +306,9 @@ NE10_INLINE void ne10_radix4x4_r2c_with_twiddles_other_butterfly_neon (float32x4
             "ld1 {v10.4s, v11.4s}, [%[ptr_inr]], %[offset_in] \n\t"
             "ld1 {v12.4s, v13.4s}, [%[ptr_inr]], %[offset_in] \n\t"
             "ld1 {v14.4s, v15.4s}, [%[ptr_inr]] \n\t"
-            "ld1 {v0.1d},  [%[ptw0]], %[offset_out] \n\t"
-            "ld1 {v1.1d},  [%[ptw1]], %[offset_out] \n\t"
-            "ld1 {v2.1d},  [%[ptw2]] \n\t"
+            "ld1 {v0.1d},  [%[ptr_tw]], %[offset_out] \n\t"
+            "ld1 {v1.1d},  [%[ptr_tw]], %[offset_out] \n\t"
+            "ld1 {v2.1d},  [%[ptr_tw]] \n\t"
 
             "fmul %[q2_out1r].4s, v10.4s, v0.4s[0] \n\t" // RR
             "fmul %[q2_out1i].4s, v10.4s, v0.4s[1] \n\t" // RI
@@ -335,11 +335,8 @@ NE10_INLINE void ne10_radix4x4_r2c_with_twiddles_other_butterfly_neon (float32x4
           [ptr_inr]"+r"(ptr_inr),
           [ptr_ini]"+r"(ptr_ini),
           [ptr_tw]"+r"(ptr_tw)
-        : [ptw0]"r"(twiddles),
-          [ptw1]"r"(twiddles + out_step),
-          [ptw2]"r"(twiddles + out_step * 2),
-          [offset_in]"r"(in_step * 16),
-          [offset_out]"r"(out_step * 4)
+        : [offset_in]"r"(in_step * 16),
+          [offset_out]"r"(out_step * 8)
         : "memory", "v0", "v1", "v2",
           "v10", "v11", "v12", "v13", "v14", "v15"
         );
