@@ -63,6 +63,13 @@
           ],
         }],
         ['target_arch=="arm64"', {
+          'conditions': [
+            ['ne10_arm64_inline_asm == 1', {
+              'defines': [
+                'NE10_INLINE_ASM_OPT',
+              ],
+            }],
+          ],
           'sources' : [
             'Ne10/modules/dsp/NE10_fft_float32.neonintrinsic.c',
             'Ne10/modules/dsp/NE10_rfft_float32.c',

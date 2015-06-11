@@ -54,13 +54,6 @@
         'defines': [
           'HAVE_NE10',
         ],
-        'conditions': [
-          'ne10_arm64_inline_asm == 1', {
-            'defines': [
-              'NE10_INLINE_ASM_OPT',
-            ],
-          },
-        ],
         'dependencies' : [
           '../../../../third_party/other-fft/ne10.gyp:ne10',
         ]
