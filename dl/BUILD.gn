@@ -355,4 +355,14 @@ if (current_cpu == "arm") {
    ]
 
   }
+
+  executable("test_fft_time") {
+    sources = [
+      "sp/src/test/test_fft_time.c",
+    ]
+    deps = [
+      ":dl",
+      ":test_utilities",
+    ]
+  }
 }
