@@ -331,4 +331,28 @@ if (current_cpu == "arm") {
       ":test_utilities",
    ]
   }
+
+  executable("test_float_rfft") {
+    public_configs = [ ":dl_config" ]
+    configs -= [
+      "//build/config/compiler:chromium_code",
+      "//build/config/compiler:assembler_debug_dir",
+    ]
+    configs += [
+      "//build/config/compiler:no_chromium_code",
+      ":no_integrated_as",
+    ]
+
+    sources = [
+      "sp/src/test/test_float_rfft.c",
+      "sp/src/test/support/float_rfft_neon.c",
+      "sp/src/test/support/float_rfft_thresholds.h",
+    ]
+
+    deps = [
+      ":dl",
+      ":test_utilities",
+   ]
+
+  }
 }
