@@ -25,7 +25,9 @@
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 #define MAX_FFT_ORDER_FIXED_POINT 12
 
+#if 0
 #define ENABLE_FIXED_POINT_FFT_TESTS
+#endif
 
 #if defined(FLOAT_ONLY) || defined(ARM_VFP_TEST)
 /*
@@ -1042,7 +1044,9 @@ void TimeOneRFFT16(int count, int fft_log_size, float signal_value,
       }
       GetUserTime(&end_time);
     } else {
+#if 0
       float factor = -1;
+#endif
 
       GetUserTime(&start_time);
       for (n = 0; n < count; ++n) {
@@ -1218,7 +1222,7 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
-  int scaleFactor;
+  int scaleFactor = 0;
 
   fft_size = 1 << fft_log_size;
 
@@ -1306,8 +1310,9 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
       }
       GetUserTime(&end_time);
     } else {
+#if 0
       float factor = -1;
-
+#endif
       GetUserTime(&start_time);
       for (n = 0; n < count; ++n) {
         status = omxSP_FFTFwd_RToCCS_S32_Sfs(x, y, fft_fwd_spec,
