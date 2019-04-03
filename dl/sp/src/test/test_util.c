@@ -33,7 +33,7 @@ void usage(char* prog, int real_only, int max_fft_order, const char *summary) {
   fprintf(stderr, "\n%s: [-hTFI] [-n logsize] [-s scale] [-g signal-type] "
           "[-S signal value]\n\t\t[-v verbose] [-m minFFT] [-M maxFFT]\n",
           ProgramName(prog));
-  fprintf(stderr, summary);
+  fprintf(stderr, "%s", summary);
   fprintf(stderr, "  -h\t\tThis help\n");
   fprintf(stderr, "  -T\t\tIndividual test mode, otherwise run all tests\n");
   fprintf(stderr, "  -F\t\tDo not run forward FFT tests\n");
