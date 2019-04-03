@@ -76,13 +76,9 @@ void TimeOnePfFFT(int count, int fft_log_size, float signal_value,
   }
 
   if (do_inverse_test) {
-    float scale = 1.0 / fft_size;
-
     memcpy(y, y_true, sizeof(*y) * (fft_size + 2));
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      int m;
-      
       pffft_transform_ordered(s, (float*)y_true, (float*)z, NULL, PFFFT_BACKWARD);
       /*
        * Need to include cost of scaling the inverse
@@ -204,8 +200,6 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
   }
 
   if (do_inverse_test) {
-    float scale = 1.0 / fft_size;
-
     /* Copy y_true to true, but arrange the values according to what rdft wants. */
 
     memcpy(y_tmp, y_true, sizeof(y_tmp[0]) * fft_size);
@@ -213,8 +207,6 @@ void TimeOnePfRFFT(int count, int fft_log_size, float signal_value,
 
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      int m;
-      
       pffft_transform_ordered(s, (float*)y_tmp, (float*)z, NULL, PFFFT_BACKWARD);
       /*
        * Need to include cost of scaling the inverse
