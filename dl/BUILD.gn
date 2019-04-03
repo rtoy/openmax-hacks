@@ -288,4 +288,47 @@ if (current_cpu == "arm") {
       "sp/src/arm/neon/omxSP_FFTInv_CCSToR_F32_Sfs_s.S",
     ]
   }
+
+  # Testing stuff
+  static_library("test_utilities") {
+    public_configs = [ ":dl_config" ]
+    configs -= [
+      "//build/config/compiler:chromium_code",
+      "//build/config/compiler:assembler_debug_dir",
+    ]
+    configs += [
+      "//build/config/compiler:no_chromium_code",
+      ":no_integrated_as",
+    ]
+    sources = [
+      "sp/src/test/aligned_ptr.c",
+      "sp/src/test/compare.c",
+      "sp/src/test/gensig.c",
+      "sp/src/test/test_util.c",
+      "sp/src/test/test_util_fft.c",
+      "sp/src/test/compare.h",
+      "sp/src/test/gensig.h",
+    ]
+  }
+
+  executable("test_float_fft") {
+    public_configs = [ ":dl_config" ]
+    configs -= [
+      "//build/config/compiler:chromium_code",
+      "//build/config/compiler:assembler_debug_dir",
+    ]
+    configs += [
+      "//build/config/compiler:no_chromium_code",
+      ":no_integrated_as",
+    ]
+    sources = [
+      "sp/src/test/test_float_fft.c",
+      "sp/src/test/support/float_fft_neon.c",
+    ]
+
+    deps = [
+      ":dl",
+      ":test_utilities",
+   ]
+  }
 }
