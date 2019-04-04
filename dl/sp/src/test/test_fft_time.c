@@ -31,6 +31,9 @@
 #ifdef HAVE_CKFFT
 #include "dl/sp/src/test/fft_time_ckfft.h"
 #endif
+#ifdef HAVE_FFMPEG
+#include "dl/sp/src/test/fft_time_ffmpeg.h"
+#endif
 
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 #define MAX_FFT_ORDER_FIXED_POINT 12
@@ -141,6 +144,14 @@ void TimeFFTUsage(char* prog) {
 #ifdef HAVE_KISSFFT
       "              8 - KissFFT Complex float\n"
       "              9 - KissFFT Real float\n"
+#endif
+#ifdef HAVE_CKFFT
+      "             10 - CKFFT Complex float\n"
+      "             11 - CKFFT Real float\n"
+#endif
+#ifdef HAVE_FFMPEG
+      "             12 - FFmpeg Complex float\n"
+      "             13 - FFmpeg Real float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -259,6 +270,10 @@ int main(int argc, char* argv[]) {
     TimeCkFFTFFT(count, signal_value, signal_type);
     TimeCkFFTRFFT(count, signal_value, signal_type);
 #endif
+#ifdef HAVE_FFMPEG
+    TimeFFmpegFFT(count, signal_value, signal_type);
+    TimeFFmpegRFFT(count, signal_value, signal_type);
+#endif
   } else {
     switch (fft_type) {
 #if defined(__arm__) || defined(__aarch64__)
@@ -306,6 +321,14 @@ int main(int argc, char* argv[]) {
         break;
       case 11:
         TimeOneCkFFTRFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+#endif        
+#ifdef HAVE_FFMPEG
+      case 12:
+        TimeOneFFmpegFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+      case 13:
+        TimeOneFFmpegRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif        
       default:

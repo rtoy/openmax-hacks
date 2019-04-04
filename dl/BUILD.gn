@@ -12,8 +12,9 @@ declare_args() {
   pffft = true
   kissfft = true
   ckfft = true
-  ne10 = false
+  # This compiles but won't link.
   ffmpeg = false
+  ne10 = false
   ne10_arm64_inline_asm = false
 }
 
@@ -451,6 +452,96 @@ if (current_cpu == "arm") {
     }
   }
 
+  if (ffmpeg) {
+    source_set("ffmpeg-avcodec") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      include_dirs = [
+        "../third_party/other-fft/ffmpeg",
+      ]
+      sources = [
+        "../third_party/other-fft/ffmpeg/config.h",
+
+        "../third_party/other-fft/ffmpeg/libavcodec/arm/cpu.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/arm/fft_init_arm.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/arm/fft_neon.S",
+        "../third_party/other-fft/ffmpeg/libavcodec/arm/mdct_neon.S",
+        "../third_party/other-fft/ffmpeg/libavcodec/arm/rdft_neon.S",
+        "../third_party/other-fft/ffmpeg/libavcodec/avfft.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/avfft.h",
+        "../third_party/other-fft/ffmpeg/libavcodec/dct.h",
+        "../third_party/other-fft/ffmpeg/libavcodec/fft.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/fft.h",
+        "../third_party/other-fft/ffmpeg/libavcodec/fft-internal.h",
+        "../third_party/other-fft/ffmpeg/libavcodec/mdct.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/rdft.c",
+        "../third_party/other-fft/ffmpeg/libavcodec/rdft.h",
+        "../third_party/other-fft/ffmpeg/libavcodec/synth_filter.h",
+      ]
+    }
+    source_set("ffmpeg-avutil") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      include_dirs = [
+        "../third_party/other-fft/ffmpeg"
+      ]
+      sources = [
+        "../third_party/other-fft/ffmpeg/libavutil/attributes.h",
+        "../third_party/other-fft/ffmpeg/libavutil/avconfig.h",
+        "../third_party/other-fft/ffmpeg/libavutil/avutil.h",
+        "../third_party/other-fft/ffmpeg/libavutil/bswap.h",
+        "../third_party/other-fft/ffmpeg/libavutil/common.h",
+        "../third_party/other-fft/ffmpeg/libavutil/cpu.c",
+        "../third_party/other-fft/ffmpeg/libavutil/cpu.h",
+        "../third_party/other-fft/ffmpeg/libavutil/dict.h",
+        "../third_party/other-fft/ffmpeg/libavutil/error.h",
+        "../third_party/other-fft/ffmpeg/libavutil/intfloat.h",
+        "../third_party/other-fft/ffmpeg/libavutil/intfloat_readwrite.h",
+        "../third_party/other-fft/ffmpeg/libavutil/intreadwrite.h",
+        "../third_party/other-fft/ffmpeg/libavutil/log.h",
+        "../third_party/other-fft/ffmpeg/libavutil/mathematics.h",
+        "../third_party/other-fft/ffmpeg/libavutil/mem.c",
+        "../third_party/other-fft/ffmpeg/libavutil/mem.h",
+        "../third_party/other-fft/ffmpeg/libavutil/old_pix_fmts.h",
+        "../third_party/other-fft/ffmpeg/libavutil/opt.h",
+        "../third_party/other-fft/ffmpeg/libavutil/pixfmt.h",
+        "../third_party/other-fft/ffmpeg/libavutil/rational.h",
+        "../third_party/other-fft/ffmpeg/libavutil/samplefmt.h",
+        "../third_party/other-fft/ffmpeg/libavutil/version.h",
+      ]
+    }
+    source_set("ffpmeg-avutilarm") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      sources = [
+        "../third_party/other-fft/ffmpeg/libavutil/arm/asm.S",
+        "../third_party/other-fft/ffmpeg/libavutil/arm/cpu.c",
+        "../third_party/other-fft/ffmpeg/libavutil/arm/cpu.h",
+      ]
+    }
+  }
+
   executable("test_fft_time") {
     deps = []
     defines = []
@@ -493,6 +584,18 @@ if (current_cpu == "arm") {
         "sp/src/test/fft_time_ckfft.h"
       ]
       deps += [ ":ckfft" ]
+    }
+
+    if (ffmpeg) {
+      defines += [ "HAVE_FFMPEG" ]
+      sources += [
+        "sp/src/test/fft_time_ffmpeg.c",
+        "sp/src/test/fft_time_ffmpeg.h"
+      ]
+      deps += [
+        ":ffmpeg-avcodec",
+        ":ffmpeg-avutil",
+      ]
     }
   }
 }
