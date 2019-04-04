@@ -22,6 +22,9 @@
 #include "dl/sp/src/test/gensig.h"
 #include "dl/sp/src/test/test_util.h"
 
+#ifdef HAVE_PFFFT
+#include "dl/sp/src/test/fft_time_pffft.h"
+#endif
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 #define MAX_FFT_ORDER_FIXED_POINT 12
 
@@ -79,13 +82,13 @@ void TimeOneRFFT32(int count, int fft_log_size, float signal_value,
 void TimeRFFT32(int count, float signal_value, int signal_type);
 #endif
 
-static int verbose = 1;
-static int include_conversion = 0;
+int verbose = 1;
+int include_conversion = 0;
 static int adapt_count = 1;
-static int do_forward_test = 1;
-static int do_inverse_test = 1;
-static int min_fft_order = 2;
-static int max_fft_order = MAX_FFT_ORDER;
+int do_forward_test = 1;
+int do_inverse_test = 1;
+int min_fft_order = 2;
+int max_fft_order = MAX_FFT_ORDER;
 
 void TimeFFTUsage(char* prog) {
   fprintf(stderr, 
@@ -123,7 +126,9 @@ void TimeFFTUsage(char* prog) {
       "              3 - Real 16-bit\n"
       "              4 - Complex 32-bit\n"
       "              5 - Real 32-bit\n"
-#else
+#endif
+#ifdef HAVE_PFFFT
+      "              6 - PFFFT Complex float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -255,6 +260,11 @@ int main(int argc, char* argv[]) {
         TimeOneRFFT32(count, fft_log_size, signal_value, signal_type);
         break;
 #endif
+#ifdef HAVE_PFFFT
+      case 6:
+        TimeOnePfFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+#endif        
       default:
         fprintf(stderr, "Unknown FFT type: %d\n", fft_type);
         break;

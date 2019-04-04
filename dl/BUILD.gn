@@ -8,6 +8,12 @@ import("//build/config/arm.gni")
 declare_args() {
   # Override this value to build with small float FFT tables
   openmax_big_float_fft = true
+  kissfft = false
+  ne10 = false
+  ffmpeg = false
+  ckfft = false
+  pffft = true
+  ne10_arm64_inline_asm = false
 }
 
 config("dl_config") {
@@ -356,13 +362,55 @@ if (current_cpu == "arm") {
 
   }
 
+  if (pffft) {
+    static_library("pffft") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      sources = [
+        "../third_party/other-fft/pffft/fftpack.c",
+        "../third_party/other-fft/pffft/fftpack.h",
+        "../third_party/other-fft/pffft/pffft.c",
+        "../third_party/other-fft/pffft/pffft.h",
+      ]
+    }
+  }
+
   executable("test_fft_time") {
-    sources = [
-      "sp/src/test/test_fft_time.c",
-    ]
-    deps = [
+    deps = []
+    defines = []
+
+    deps += [
       ":dl",
       ":test_utilities",
     ]
+
+    sources = [
+      "sp/src/test/test_fft_time.c",
+    ]
+
+    if (openmax_big_float_fft) {
+      defines += [ "BIG_FFT_TABLE" ]
+    }
+
+    if (kissfft && current-cpu == "arm") {
+      defines += [ "HAVE_KISSFFT" ]
+    }
+
+    if (pffft) {
+      defines += [ "HAVE_PFFFT" ]
+      sources += [
+        "sp/src/test/fft_time_pffft.c",
+        "sp/src/test/fft_time_pffft.h"
+      ]
+      deps += [ ":pffft" ]
+    }
+
   }
 }
