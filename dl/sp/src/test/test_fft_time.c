@@ -129,6 +129,7 @@ void TimeFFTUsage(char* prog) {
 #endif
 #ifdef HAVE_PFFFT
       "              6 - PFFFT Complex float\n"
+      "              7 - PFFFT Real float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -235,6 +236,10 @@ int main(int argc, char* argv[]) {
     TimeSC32FFT(count, signal_value, signal_type);
     TimeRFFT32(count, signal_value, signal_type);
 #endif
+#ifdef HAVE_PFFFT
+    TimePfFFT(count, signal_value, signal_type);
+    TimePfRFFT(count, signal_value, signal_type);
+#endif    
   } else {
     switch (fft_type) {
 #if defined(__arm__) || defined(__aarch64__)
@@ -263,6 +268,9 @@ int main(int argc, char* argv[]) {
 #ifdef HAVE_PFFFT
       case 6:
         TimeOnePfFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+      case 7:
+        TimeOnePfRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif        
       default:
