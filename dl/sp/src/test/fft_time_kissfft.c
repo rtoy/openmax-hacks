@@ -74,10 +74,8 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
   }
 
   if (do_inverse_test) {
-    double scale = 1.0 / fft_size;
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      int k;
       kiss_fft(fft_inv_spec, (kiss_fft_cpx*) y_true, z);
 
       // kiss_fft does not scale the inverse transform so do it here.
@@ -181,10 +179,8 @@ void TimeOneKissRFFT(int count, int fft_log_size, float signal_value,
   }
 
   if (do_inverse_test) {
-    double scale = 1.0 / fft_size;
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      int k;
       kiss_fftri(fft_inv_spec, (kiss_fft_cpx*) y_true, z);
 
       // kiss_fft does not scale the inverse transform so do it here.
