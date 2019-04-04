@@ -16,16 +16,25 @@ Thus
 
 ```
 cd $CHROMIUM/src/third_party
-git clone https://github.com/rtoy/openmax-hacks.git
-cd openmax-hacks
+mv openmax_dl openmax_dl-save
+git clone https://github.com/rtoy/openmax-hacks.git openmax_dl
 ```
+
+Moving `openmax_dl` directory out of the way isn't ideal, but for now,
+this is the easiest way to get things going
 
 ### Building
 
 Use
 ```
-build/gyp_chromium --depth=$PWD OS=android third_party/openmax-hacks/dl/sp/src/test/test_fft_time.gyp
-ninja -C out/Release
+cd $CHROMIUM/src
+# Fill in gn args
+# I'm using
+# target_os = "android"
+# target_cpu = "arm"
+# is_debug = false
+gn args out/Release
+ninja -C out/Release test_float_fft test_float_rfft test_fft_time
 ```
 
 This creates timing tests for the OpenMAX DL routines.  You can add
@@ -57,14 +66,14 @@ Once `test_fft_time` has been built, you can run it on an Android
 device as follows:
 
 ```
-adb root
-adb push out/Release/test_fft_time <directory>
-adb shell <directory>/test_fft_time -h
+adb push out/Release/test_fft_time /data/local/tmp
+adb shell /data/local/tmp/test_fft_time -h
 ```
 
-where `<directory>` is some suitable directory.  (On production
-devices you cannot get root access, so this is not going to work for
-you.)
+where directory `/data/local/tmp` seems like a general available
+suitable directory that can be used for installing the executable.  If
+this doesn't work, find some other directory, or maybe try `adb root`
+first.
 
 The `-h` option prints out a help message.  Choose the appropriate set
 of options for the test that you want to run.  In particular `-v0`
