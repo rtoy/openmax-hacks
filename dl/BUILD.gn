@@ -11,9 +11,9 @@ declare_args() {
   # Optional other FFT packages for testing.
   pffft = true
   kissfft = true
+  ckfft = true
   ne10 = false
   ffmpeg = false
-  ckfft = false
   ne10_arm64_inline_asm = false
 }
 
@@ -407,6 +407,50 @@ if (current_cpu == "arm") {
     }
   }
 
+  if (ckfft) {
+    static_library("ckfft") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      include_dirs = [
+        "../third_party/other-fft/ckfft",
+        "../third_party/other-fft/ckfft/src",
+        "../third_party/other-fft/ckfft/inc"
+      ]
+      deps = [
+        "//third_party/android_sdk:cpu_features",
+      ]
+      sources = [
+        "../third_party/other-fft/ckfft/inc/ckfft/ckfft.h",
+        "../third_party/other-fft/ckfft/src/ckfft/ckfft.cpp",
+        "../third_party/other-fft/ckfft/src/ckfft/context.cpp",
+        "../third_party/other-fft/ckfft/src/ckfft/context.h",
+        "../third_party/other-fft/ckfft/src/ckfft/debug.cpp",
+        "../third_party/other-fft/ckfft/src/ckfft/debug.h",
+        "../third_party/other-fft/ckfft/src/ckfft/fft.cpp",
+        "../third_party/other-fft/ckfft/src/ckfft/fft.h",
+        "../third_party/other-fft/ckfft/src/ckfft/fft_default.cpp",
+        "../third_party/other-fft/ckfft/src/ckfft/fft_default.h",
+        "../third_party/other-fft/ckfft/src/ckfft/fft_neon.cpp",
+        "../third_party/other-fft/ckfft/src/ckfft/fft_neon.h",
+        "../third_party/other-fft/ckfft/src/ckfft/fft_real.cpp",
+        "../third_party/other-fft/ckfft/src/ckfft/fft_real.h",
+        "../third_party/other-fft/ckfft/src/ckfft/fft_real_default.cpp",
+        "../third_party/other-fft/ckfft/src/ckfft/fft_real_default.h",
+        "../third_party/other-fft/ckfft/src/ckfft/fft_real_neon.cpp",
+        "../third_party/other-fft/ckfft/src/ckfft/fft_real_neon.h",
+        "../third_party/other-fft/ckfft/src/ckfft/math_util.h",
+        "../third_party/other-fft/ckfft/src/ckfft/platform.h",
+      ]
+    }
+  }
+
   executable("test_fft_time") {
     deps = []
     defines = []
@@ -442,5 +486,13 @@ if (current_cpu == "arm") {
       deps += [ ":pffft" ]
     }
 
+    if (ckfft) {
+      defines += [ "HAVE_CKFFT" ]
+      sources += [
+        "sp/src/test/fft_time_ckfft.c",
+        "sp/src/test/fft_time_ckfft.h"
+      ]
+      deps += [ ":ckfft" ]
+    }
   }
 }

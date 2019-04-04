@@ -28,6 +28,9 @@
 #ifdef HAVE_KISSFFT
 #include "dl/sp/src/test/fft_time_kissfft.h"
 #endif
+#ifdef HAVE_CKFFT
+#include "dl/sp/src/test/fft_time_ckfft.h"
+#endif
 
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 #define MAX_FFT_ORDER_FIXED_POINT 12
@@ -252,6 +255,10 @@ int main(int argc, char* argv[]) {
     TimeKissFFT(count, signal_value, signal_type);
     TimeKissRFFT(count, signal_value, signal_type);
 #endif    
+#ifdef HAVE_CKFFT
+    TimeCkFFTFFT(count, signal_value, signal_type);
+    TimeCkFFTRFFT(count, signal_value, signal_type);
+#endif
   } else {
     switch (fft_type) {
 #if defined(__arm__) || defined(__aarch64__)
@@ -291,6 +298,14 @@ int main(int argc, char* argv[]) {
         break;
       case 9:
         TimeOneKissRFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+#endif        
+#ifdef HAVE_CKFFT
+      case 10:
+        TimeOneCkFFTFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+      case 11:
+        TimeOneCkFFTRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif        
       default:
