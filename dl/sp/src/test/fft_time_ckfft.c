@@ -94,12 +94,8 @@ void TimeOneCkFFTFFT(int count, int fft_log_size, float signal_value,
   }
 
   if (do_inverse_test) {
-    float scale = 1.0 / fft_size;
-
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      int m;
-      
       memcpy(z, y_true, sizeof(*z) * fft_size);
       CkFftComplexInverse(fft_spec, fft_size, (CkFftComplex*) y_true, (CkFftComplex*) z);
 
@@ -172,7 +168,6 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
   struct timeval start_time;
   struct timeval end_time;
   double elapsed_time;
-  double copy_time = 0.0;
   struct SnrResult snr_forward;
   struct SnrResult snr_inverse;
 
@@ -229,12 +224,8 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
   }
 
   if (do_inverse_test) {
-    float scale = 1.0 / fft_size;
-
     GetUserTime(&start_time);
     for (n = 0; n < count; ++n) {
-      int m;
-      
       CkFftRealInverse(fft_spec, fft_size, (CkFftComplex*)y_true, z, (CkFftComplex*) tmp);
 
       // CkFftComplexInverse doesn't scale the inverse by 1/N, so we
@@ -270,7 +261,6 @@ void TimeOneCkFFTRFFT(int count, int fft_log_size, float signal_value,
 
 void TimeCkFFTRFFT(int count, float signal_value, int signal_type) {
   int k;
-  int min_order;
 
   if (verbose == 0)
     printf("%s CkFFT RFFT\n", do_forward_test ? "Forward" : "Inverse");
