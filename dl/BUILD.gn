@@ -8,11 +8,12 @@ import("//build/config/arm.gni")
 declare_args() {
   # Override this value to build with small float FFT tables
   openmax_big_float_fft = true
-  kissfft = false
+  # Optional other FFT packages for testing.
+  pffft = true
+  kissfft = true
   ne10 = false
   ffmpeg = false
   ckfft = false
-  pffft = true
   ne10_arm64_inline_asm = false
 }
 
@@ -382,6 +383,30 @@ if (current_cpu == "arm") {
     }
   }
 
+  if (kissfft && current_cpu == "arm") {
+    static_library("kissfft") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      include_dirs = [ "../third_party/other-fft/kiss_fft130" ]
+      sources = [
+        "../third_party/other-fft/kiss_fft130/_kiss_fft_guts.h",
+        "../third_party/other-fft/kiss_fft130/kiss_fft.c",
+        "../third_party/other-fft/kiss_fft130/kiss_fft.h",
+        "../third_party/other-fft/kiss_fft130/kiss_fft_bfly2_neon.S",
+        "../third_party/other-fft/kiss_fft130/kiss_fft_bfly4_neon.S",
+        "../third_party/other-fft/kiss_fft130/tools/kiss_fftr.c",
+        "../third_party/other-fft/kiss_fft130/tools/kiss_fftr.h",
+      ]
+    }
+  }
+
   executable("test_fft_time") {
     deps = []
     defines = []
@@ -399,8 +424,13 @@ if (current_cpu == "arm") {
       defines += [ "BIG_FFT_TABLE" ]
     }
 
-    if (kissfft && current-cpu == "arm") {
+    if (kissfft && current_cpu == "arm") {
       defines += [ "HAVE_KISSFFT" ]
+      sources += [
+        "sp/src/test/fft_time_kissfft.c",
+        "sp/src/test/fft_time_kissfft.h"
+      ]
+      deps += [ ":kissfft" ]
     }
 
     if (pffft) {
