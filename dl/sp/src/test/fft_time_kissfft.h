@@ -6,5 +6,8 @@ void TimeOneKissFFT(int count, int fft_log_size, float signal_value,
 		    int signal_type);
 void TimeKissFFT(int count, float signal_value, int signal_type);
 
+void TimeOneKissRFFT(int count, int fft_log_size, float signal_value,
+                     int signal_type);
+void TimeKissRFFT(int count, float signal_value, int signal_type);
 #endif
 #endif
