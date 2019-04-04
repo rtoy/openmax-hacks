@@ -25,6 +25,10 @@
 #ifdef HAVE_PFFFT
 #include "dl/sp/src/test/fft_time_pffft.h"
 #endif
+#ifdef HAVE_KISSFFT
+#include "dl/sp/src/test/fft_time_kissfft.h"
+#endif
+
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 #define MAX_FFT_ORDER_FIXED_POINT 12
 
@@ -130,6 +134,10 @@ void TimeFFTUsage(char* prog) {
 #ifdef HAVE_PFFFT
       "              6 - PFFFT Complex float\n"
       "              7 - PFFFT Real float\n"
+#endif
+#ifdef HAVE_KISSFFT
+      "              8 - KissFFT Complex float\n"
+      "              9 - KissFFT Real float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -239,6 +247,10 @@ int main(int argc, char* argv[]) {
 #ifdef HAVE_PFFFT
     TimePfFFT(count, signal_value, signal_type);
     TimePfRFFT(count, signal_value, signal_type);
+#endif
+#ifdef HAVE_KISSFFT
+    TimeKissFFT(count, signal_value, signal_type);
+    TimeKissRFFT(count, signal_value, signal_type);
 #endif    
   } else {
     switch (fft_type) {
@@ -271,6 +283,14 @@ int main(int argc, char* argv[]) {
         break;
       case 7:
         TimeOnePfRFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+#endif        
+#ifdef HAVE_KISSFFT
+      case 8:
+        TimeOneKissFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+      case 9:
+        TimeOneKissRFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif        
       default:
