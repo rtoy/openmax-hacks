@@ -1,4 +1,4 @@
-#ifdef FFT_TIME_NE10_H_
+#ifndef FFT_TIME_NE10_H_
 #define FFT_TIME_NE10_H_
 
 #if defined(HAVE_NE10)
