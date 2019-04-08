@@ -14,7 +14,7 @@ declare_args() {
   ckfft = true
   # This compiles but won't link.
   ffmpeg = false
-  ne10 = false
+  ne10 = true
   ne10_arm64_inline_asm = false
 }
 
@@ -542,6 +542,59 @@ if (current_cpu == "arm") {
     }
   }
 
+  if (ne10) {
+    static_library("ne10") {
+      public_configs = [ ":dl_config" ]
+      configs -= [
+        "//build/config/compiler:chromium_code",
+        "//build/config/compiler:assembler_debug_dir",
+      ]
+      configs += [
+        "//build/config/compiler:no_chromium_code",
+        ":no_integrated_as",
+      ]
+      include_dirs = [
+        "../third_party/other-fft/Ne10/inc",
+        "../third_party/other-fft/Ne10/common"
+      ]
+      sources = [
+        #"../third_party/other-fft/Ne10/common/NE10_mask_table.c",
+        #"../third_party/other-fft/Ne10/common/NE10_mask_table.h"
+        #"../third_party/other-fft/Ne10/inc/NE10_types.h",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_cfft.c",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_cfft_init.c",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_cfft.neon.s",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_fir.c",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_fir_init.c",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_fir.neon.s",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_iir.c",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_iir_init.c",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_iir.neon.s",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_init_dsp.c",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_rfft.c",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_rfft_init.c",
+        #"../third_party/other-fft/Ne10/modules/dsp/NE10_rfft.neon.c",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_common_varibles.h",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_cplx_ops.h",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_debug_macro.h",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_generic_float32.c",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_generic_float32.neonintrinsic.cpp",
+        "../third_party/other-fft/Ne10/inc/NE10_dsp.h",
+        "../third_party/other-fft/Ne10/inc/NE10_types.h",
+        "../third_party/other-fft/Ne10/inc/NE10_macros.h",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_fft.c",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_fft.h",
+        "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_float32.c",
+      ]
+      if (current_cpu == "arm") {
+        sources += [
+            "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_float32.neon.c",
+            "../third_party/other-fft/Ne10/modules/dsp/NE10_fft_float32.neon_s.S",
+        ]
+      }
+    }
+  }
+
   executable("test_fft_time") {
     deps = []
     defines = []
@@ -595,6 +648,17 @@ if (current_cpu == "arm") {
       deps += [
         ":ffmpeg-avcodec",
         ":ffmpeg-avutil",
+      ]
+    }
+
+    if (ne10) {
+      defines += [ "HAVE_NE10" ]
+      sources += [
+        "sp/src/test/fft_time_ne10.c",
+        "sp/src/test/fft_time_ne10.h"
+      ]
+      deps += [
+        ":ne10"
       ]
     }
   }

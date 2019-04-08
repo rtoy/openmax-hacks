@@ -34,6 +34,9 @@
 #ifdef HAVE_FFMPEG
 #include "dl/sp/src/test/fft_time_ffmpeg.h"
 #endif
+#ifdef HAVE_NE10
+#include "dl/sp/src/test/fft_time_ne10.h"
+#endif
 
 #define MAX_FFT_ORDER TWIDDLE_TABLE_ORDER
 #define MAX_FFT_ORDER_FIXED_POINT 12
@@ -152,6 +155,10 @@ void TimeFFTUsage(char* prog) {
 #ifdef HAVE_FFMPEG
       "             12 - FFmpeg Complex float\n"
       "             13 - FFmpeg Real float\n"
+#endif
+#ifdef HAVE_NE10
+      "             14 - FFmpeg Complex float\n"
+      "             15 - FFmpeg Real float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -274,6 +281,10 @@ int main(int argc, char* argv[]) {
     TimeFFmpegFFT(count, signal_value, signal_type);
     TimeFFmpegRFFT(count, signal_value, signal_type);
 #endif
+#ifdef HAVE_NE10
+    TimeNE10FFT(count, signal_value, signal_type);
+    TimeNE10RFFT(count, signal_value, signal_type);
+#endif
   } else {
     switch (fft_type) {
 #if defined(__arm__) || defined(__aarch64__)
@@ -329,6 +340,14 @@ int main(int argc, char* argv[]) {
         break;
       case 13:
         TimeOneFFmpegRFFT(count, fft_log_size, signal_value, signal_type);
+        break;
+#endif        
+#ifdef HAVE_NE10
+      case 14:
+        TimeOneNE10FFT(count, fft_log_size, signal_value, signal_type);
+        break;
+      case 15:
+        TimeOneNE10RFFT(count, fft_log_size, signal_value, signal_type);
         break;
 #endif        
       default:
