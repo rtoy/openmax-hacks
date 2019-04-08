@@ -123,6 +123,7 @@ static inline void NE10_FFT4_MUL_TW_NEON (CPLX scratch_out[4],
     NE10_CPX_MUL_NEON_F32 (scratch_out[3], scratch_in[3], scratch_tw[2]);
 }
 
+#if 0
 static inline void NE10_FFT5_MUL_TW_NEON (CPLX scratch_out[5],
         const CPLX scratch_in[5],
         const CPLX scratch_tw[4])
@@ -130,6 +131,7 @@ static inline void NE10_FFT5_MUL_TW_NEON (CPLX scratch_out[5],
     NE10_FFT4_MUL_TW_NEON (scratch_out, scratch_in, scratch_tw);
     NE10_CPX_MUL_NEON_F32 (scratch_out[4], scratch_in[4], scratch_tw[3]);
 }
+#endif
 
 ////////////////
 // Conj inplace.
@@ -238,6 +240,7 @@ static inline void NE10_FFT2_FUC_NEON_F32 (CPLX scratch_out[2],
     NE10_CPX_SUB_NEON_F32 (scratch_out[1], scratch_in[0], scratch_in[1]);
 }
 
+#if 0
 static inline void NE10_FFT3_FUC_NEON_F32 (CPLX Fout[3],
         const CPLX Fin[3])
 {
@@ -253,7 +256,9 @@ static inline void NE10_FFT3_FUC_NEON_F32 (CPLX Fout[3],
     Fout[0].val[0] = Fout[0].val[0] * TW_3IN_NEON_F32;
     Fout[0].val[1] = Fout[0].val[1] * TW_3IN_NEON_F32;
 }
+#endif
 
+#if 0
 static inline void NE10_FFT4_FUC_NEON_F32 (CPLX scratch_out[4],
         const CPLX scratch_in[4])
 {
@@ -272,6 +277,7 @@ static inline void NE10_FFT4_FUC_NEON_F32 (CPLX scratch_out[4],
     scratch_out[3].val[0] = scratch[1].val[0] - scratch[3].val[1];
     scratch_out[3].val[1] = scratch[1].val[1] + scratch[3].val[0];
 }
+#endif
 
 static inline void NE10_FFT4_FUC_INPLACE_NEON_F32 (CPLX scratch_out[4])
 {
@@ -291,6 +297,7 @@ static inline void NE10_FFT4_FUC_INPLACE_NEON_F32 (CPLX scratch_out[4])
     scratch_out[3].val[1] = scratch[1].val[1] + scratch[3].val[0];
 }
 
+#if 0
 static inline void NE10_FFT5_FUC_INPLACE_NEON_F32 (CPLX Fout[5])
 {
     CPLX s[6];
@@ -332,6 +339,7 @@ static inline void NE10_FFT5_FUC_INPLACE_NEON_F32 (CPLX Fout[5])
     NE10_CPX_ADD_NEON_F32 (Fout[2], s[5], s[2]);
     NE10_CPX_SUB_NEON_F32 (Fout[3], s[5], s[2]);
 }
+#endif
 
 #define NE10_BUTTERFLY_INDEX_NEON_F32(OUT,IN,OUT_I,OUT_J,IN_I,IN_J) \
     do { \
