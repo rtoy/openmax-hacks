@@ -14,7 +14,7 @@ declare_args() {
   ckfft = true
   # This compiles but won't link.
   ffmpeg = false
-  ne10 = true
+  ne10 = false
   ne10_arm64_inline_asm = false
 }
 
