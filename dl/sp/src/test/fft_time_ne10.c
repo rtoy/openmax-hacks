@@ -38,7 +38,6 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
   struct ComplexFloat* y_true;
 
   int n;
-  ne10_result_t status;
   ne10_fft_cfg_float32_t fft_fwd_spec;
   int fft_size;
   struct timeval start_time;
@@ -128,7 +127,6 @@ void TimeOneNE10FFT(int count, int fft_log_size, float signal_value,
 
 void TimeNE10FFT(int count, float signal_value, int signal_type) {
   int k;
-  int min_order = min_fft_order >= 2 ? min_fft_order : 2;
 
   if (verbose == 0)
     printf("%s NE10 FFT\n", do_forward_test ? "Forward" : "Inverse");
@@ -145,7 +143,6 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   OMX_F32* x;                   /* Source */
   OMX_FC32* y;                  /* Transform */
   OMX_F32* z;                   /* Inverse transform */
-  OMX_F32* temp;
 
   OMX_F32* y_true;              /* True FFT */
 
@@ -154,7 +151,6 @@ void TimeOneNE10RFFT(int count, int fft_log_size, float signal_value,
   struct AlignedPtr* z_aligned;
 
   int n;
-  ne10_result_t status;
   ne10_fft_r2c_cfg_float32_t fft_fwd_spec;
   
   int fft_size;
