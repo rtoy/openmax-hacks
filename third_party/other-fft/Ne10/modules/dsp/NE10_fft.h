@@ -65,6 +65,7 @@
 extern "C" {
 #endif
 
+#define asm(x)
 ///////////////////////////
 // function prototypes:
 ///////////////////////////
