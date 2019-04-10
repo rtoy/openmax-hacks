@@ -850,6 +850,7 @@ static void ne10_mixed_radix_butterfly_inverse_float32_c (ne10_fft_cpx_float32_t
     } // last stage
 }
 
+#if !defined(__aarch64__)
 static void ne10_fft_split_r2c_1d_float32 (ne10_fft_cpx_float32_t *dst,
         const ne10_fft_cpx_float32_t *src,
         ne10_fft_cpx_float32_t *twiddles,
@@ -886,7 +887,9 @@ static void ne10_fft_split_r2c_1d_float32 (ne10_fft_cpx_float32_t *dst,
         dst[ncfft - k].i = (tw.i - f1k.i) * 0.5f;
     }
 }
+#endif
 
+#if !defined(__aarch64__)
 static void ne10_fft_split_c2r_1d_float32 (ne10_fft_cpx_float32_t *dst,
         const ne10_fft_cpx_float32_t *src,
         ne10_fft_cpx_float32_t *twiddles,
@@ -922,6 +925,7 @@ static void ne10_fft_split_c2r_1d_float32 (ne10_fft_cpx_float32_t *dst,
         dst[ncfft - k].i = (fok.i - fek.i) * 0.5f;
     }
 }
+#endif
 
 /**
  * @defgroup C2C_FFT_IFFT Float/Fixed point Complex FFT
