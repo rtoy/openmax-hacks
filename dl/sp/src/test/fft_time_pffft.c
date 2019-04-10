@@ -1,6 +1,7 @@
 #if defined(HAVE_PFFFT)
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 
 #include "dl/sp/api/armSP.h"
