@@ -10,6 +10,7 @@
 #include "dl/sp/src/test/test_util.h"
 #include "dl/sp/src/test/timing_util.h"
 
+#include "../../../../third_party/other-fft/Ne10/inc/NE10_init.h"
 #include "../../../../third_party/other-fft/Ne10/inc/NE10_types.h"
 #include "../../../../third_party/other-fft/Ne10/inc/NE10_dsp.h"
 
