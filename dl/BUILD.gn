@@ -12,14 +12,16 @@ declare_args() {
   pffft = true
   kissfft = true
   ckfft = true
-  # This compiles but won't link.
-  ffmpeg = false
-  ne10 = false
+  ffmpeg = true
+  # Only RFFT works.  Don't know why
+  ne10 = true
   ne10_arm64_inline_asm = false
 }
 
 config("dl_config") {
   include_dirs = [ ".." ]
+  # Needed to link ffmpeg assembly files into executable.
+  ldflags = [ "-Wl,-z,notext" ]
   if (current_cpu == "arm") {
     if (arm_use_neon) {
       # Enable build-time NEON selection.
@@ -556,6 +558,11 @@ if (current_cpu == "arm") {
       include_dirs = [
         "../third_party/other-fft/Ne10/inc",
         "../third_party/other-fft/Ne10/common"
+      ]
+      defines = [ "_ARM_HAVE_NEON" ]
+      cflags = [
+        "-mfpu=neon",
+        "-funsafe-math-optimizations",
       ]
       sources = [
         #"../third_party/other-fft/Ne10/common/NE10_mask_table.c",

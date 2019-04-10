@@ -157,8 +157,10 @@ void TimeFFTUsage(char* prog) {
       "             13 - FFmpeg Real float\n"
 #endif
 #ifdef HAVE_NE10
-      "             14 - FFmpeg Complex float\n"
-      "             15 - FFmpeg Real float\n"
+#if 0
+      "             14 - NE10 Complex float\n"
+#endif
+      "             15 - NE10 Real float\n"
 #endif
       "  -n logsize  Log2 of FFT size\n"
       "  -s scale    Scale factor for forward FFT (default = 0)\n"
@@ -282,7 +284,9 @@ int main(int argc, char* argv[]) {
     TimeFFmpegRFFT(count, signal_value, signal_type);
 #endif
 #ifdef HAVE_NE10
+#if 0
     TimeNE10FFT(count, signal_value, signal_type);
+#endif
     TimeNE10RFFT(count, signal_value, signal_type);
 #endif
   } else {
@@ -343,9 +347,11 @@ int main(int argc, char* argv[]) {
         break;
 #endif        
 #ifdef HAVE_NE10
+#if 0
       case 14:
         TimeOneNE10FFT(count, fft_log_size, signal_value, signal_type);
         break;
+#endif
       case 15:
         TimeOneNE10RFFT(count, fft_log_size, signal_value, signal_type);
         break;
