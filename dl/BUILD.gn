@@ -8,20 +8,32 @@ import("//build/config/arm.gni")
 declare_args() {
   # Override this value to build with small float FFT tables
   openmax_big_float_fft = true
-  # Optional other FFT packages for testing.
-  pffft = true
-  kissfft = true
-  ckfft = true
-  ffmpeg = true
-  # Only RFFT works.  Don't know why
-  ne10 = true
+  if (current_cpu == "arm") {
+    # Optional other FFT packages for testing.
+    pffft = true
+    kissfft = true
+    ckfft = true
+    ffmpeg = true
+    # Only RFFT works.  Don't know why
+    ne10 = true
+  }
+  if (current_cpu == "arm64") {
+    pffft = true
+    kissfft = false
+    ckfft = false
+    ffmpeg = false
+    # Only RFFT works.  Don't know why
+    ne10 = false
+  }
   ne10_arm64_inline_asm = false
 }
 
 config("dl_config") {
   include_dirs = [ ".." ]
   # Needed to link ffmpeg assembly files into executable.
-  ldflags = [ "-Wl,-z,notext" ]
+  if (current_cpu == "arm") {
+    ldflags = [ "-Wl,-z,notext" ]
+  }
   if (current_cpu == "arm") {
     if (arm_use_neon) {
       # Enable build-time NEON selection.
@@ -299,93 +311,6 @@ if (current_cpu == "arm") {
     ]
   }
 
-  # Testing stuff
-  static_library("test_utilities") {
-    public_configs = [ ":dl_config" ]
-    configs -= [
-      "//build/config/compiler:chromium_code",
-      "//build/config/compiler:assembler_debug_dir",
-    ]
-    configs += [
-      "//build/config/compiler:no_chromium_code",
-      ":no_integrated_as",
-    ]
-    sources = [
-      "sp/src/test/aligned_ptr.c",
-      "sp/src/test/compare.c",
-      "sp/src/test/gensig.c",
-      "sp/src/test/test_util.c",
-      "sp/src/test/test_util_fft.c",
-      "sp/src/test/compare.h",
-      "sp/src/test/gensig.h",
-    ]
-  }
-
-  executable("test_float_fft") {
-    public_configs = [ ":dl_config" ]
-    configs -= [
-      "//build/config/compiler:chromium_code",
-      "//build/config/compiler:assembler_debug_dir",
-    ]
-    configs += [
-      "//build/config/compiler:no_chromium_code",
-      ":no_integrated_as",
-    ]
-    sources = [
-      "sp/src/test/test_float_fft.c",
-      "sp/src/test/support/float_fft_neon.c",
-    ]
-
-    deps = [
-      ":dl",
-      ":test_utilities",
-   ]
-  }
-
-  executable("test_float_rfft") {
-    public_configs = [ ":dl_config" ]
-    configs -= [
-      "//build/config/compiler:chromium_code",
-      "//build/config/compiler:assembler_debug_dir",
-    ]
-    configs += [
-      "//build/config/compiler:no_chromium_code",
-      ":no_integrated_as",
-    ]
-
-    sources = [
-      "sp/src/test/test_float_rfft.c",
-      "sp/src/test/support/float_rfft_neon.c",
-      "sp/src/test/support/float_rfft_thresholds.h",
-    ]
-
-    deps = [
-      ":dl",
-      ":test_utilities",
-   ]
-
-  }
-
-  if (pffft) {
-    static_library("pffft") {
-      public_configs = [ ":dl_config" ]
-      configs -= [
-        "//build/config/compiler:chromium_code",
-        "//build/config/compiler:assembler_debug_dir",
-      ]
-      configs += [
-        "//build/config/compiler:no_chromium_code",
-        ":no_integrated_as",
-      ]
-      sources = [
-        "../third_party/other-fft/pffft/fftpack.c",
-        "../third_party/other-fft/pffft/fftpack.h",
-        "../third_party/other-fft/pffft/pffft.c",
-        "../third_party/other-fft/pffft/pffft.h",
-      ]
-    }
-  }
-
   if (kissfft && current_cpu == "arm") {
     static_library("kissfft") {
       public_configs = [ ":dl_config" ]
@@ -410,49 +335,6 @@ if (current_cpu == "arm") {
     }
   }
 
-  if (ckfft) {
-    static_library("ckfft") {
-      public_configs = [ ":dl_config" ]
-      configs -= [
-        "//build/config/compiler:chromium_code",
-        "//build/config/compiler:assembler_debug_dir",
-      ]
-      configs += [
-        "//build/config/compiler:no_chromium_code",
-        ":no_integrated_as",
-      ]
-      include_dirs = [
-        "../third_party/other-fft/ckfft",
-        "../third_party/other-fft/ckfft/src",
-        "../third_party/other-fft/ckfft/inc"
-      ]
-      deps = [
-        "//third_party/android_sdk:cpu_features",
-      ]
-      sources = [
-        "../third_party/other-fft/ckfft/inc/ckfft/ckfft.h",
-        "../third_party/other-fft/ckfft/src/ckfft/ckfft.cpp",
-        "../third_party/other-fft/ckfft/src/ckfft/context.cpp",
-        "../third_party/other-fft/ckfft/src/ckfft/context.h",
-        "../third_party/other-fft/ckfft/src/ckfft/debug.cpp",
-        "../third_party/other-fft/ckfft/src/ckfft/debug.h",
-        "../third_party/other-fft/ckfft/src/ckfft/fft.cpp",
-        "../third_party/other-fft/ckfft/src/ckfft/fft.h",
-        "../third_party/other-fft/ckfft/src/ckfft/fft_default.cpp",
-        "../third_party/other-fft/ckfft/src/ckfft/fft_default.h",
-        "../third_party/other-fft/ckfft/src/ckfft/fft_neon.cpp",
-        "../third_party/other-fft/ckfft/src/ckfft/fft_neon.h",
-        "../third_party/other-fft/ckfft/src/ckfft/fft_real.cpp",
-        "../third_party/other-fft/ckfft/src/ckfft/fft_real.h",
-        "../third_party/other-fft/ckfft/src/ckfft/fft_real_default.cpp",
-        "../third_party/other-fft/ckfft/src/ckfft/fft_real_default.h",
-        "../third_party/other-fft/ckfft/src/ckfft/fft_real_neon.cpp",
-        "../third_party/other-fft/ckfft/src/ckfft/fft_real_neon.h",
-        "../third_party/other-fft/ckfft/src/ckfft/math_util.h",
-        "../third_party/other-fft/ckfft/src/ckfft/platform.h",
-      ]
-    }
-  }
 
   if (ffmpeg) {
     source_set("ffmpeg-avcodec") {
@@ -602,71 +484,203 @@ if (current_cpu == "arm") {
     }
   }
 
-  executable("test_fft_time") {
-    deps = []
-    defines = []
+}
 
-    deps += [
-      ":dl",
-      ":test_utilities",
+if (pffft) {
+  static_library("pffft") {
+    public_configs = [ ":dl_config" ]
+    configs -= [
+      "//build/config/compiler:chromium_code",
+      "//build/config/compiler:assembler_debug_dir",
     ]
-
+    configs += [
+      "//build/config/compiler:no_chromium_code",
+      ":no_integrated_as",
+    ]
     sources = [
-      "sp/src/test/test_fft_time.c",
+      "../third_party/other-fft/pffft/fftpack.c",
+      "../third_party/other-fft/pffft/fftpack.h",
+      "../third_party/other-fft/pffft/pffft.c",
+      "../third_party/other-fft/pffft/pffft.h",
     ]
+  }
+}
 
-    if (openmax_big_float_fft) {
-      defines += [ "BIG_FFT_TABLE" ]
-    }
+if (ckfft) {
+  static_library("ckfft") {
+    public_configs = [ ":dl_config" ]
+    configs -= [
+      "//build/config/compiler:chromium_code",
+      "//build/config/compiler:assembler_debug_dir",
+    ]
+    configs += [
+      "//build/config/compiler:no_chromium_code",
+      ":no_integrated_as",
+    ]
+    include_dirs = [
+      "../third_party/other-fft/ckfft",
+      "../third_party/other-fft/ckfft/src",
+      "../third_party/other-fft/ckfft/inc"
+    ]
+    deps = [
+      "//third_party/android_sdk:cpu_features",
+    ]
+    sources = [
+      "../third_party/other-fft/ckfft/inc/ckfft/ckfft.h",
+      "../third_party/other-fft/ckfft/src/ckfft/ckfft.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/context.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/context.h",
+      "../third_party/other-fft/ckfft/src/ckfft/debug.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/debug.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_default.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_default.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_neon.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_neon.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real_default.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real_default.h",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real_neon.cpp",
+      "../third_party/other-fft/ckfft/src/ckfft/fft_real_neon.h",
+      "../third_party/other-fft/ckfft/src/ckfft/math_util.h",
+      "../third_party/other-fft/ckfft/src/ckfft/platform.h",
+    ]
+  }
+}
 
-    if (kissfft && current_cpu == "arm") {
-      defines += [ "HAVE_KISSFFT" ]
-      sources += [
-        "sp/src/test/fft_time_kissfft.c",
-        "sp/src/test/fft_time_kissfft.h"
-      ]
-      deps += [ ":kissfft" ]
-    }
+# Testing stuff
+static_library("test_utilities") {
+  public_configs = [ ":dl_config" ]
+  configs -= [
+    "//build/config/compiler:chromium_code",
+    "//build/config/compiler:assembler_debug_dir",
+  ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    ":no_integrated_as",
+  ]
+  sources = [
+    "sp/src/test/aligned_ptr.c",
+    "sp/src/test/compare.c",
+    "sp/src/test/gensig.c",
+    "sp/src/test/test_util.c",
+    "sp/src/test/test_util_fft.c",
+    "sp/src/test/compare.h",
+    "sp/src/test/gensig.h",
+  ]
+}
 
-    if (pffft) {
-      defines += [ "HAVE_PFFFT" ]
-      sources += [
-        "sp/src/test/fft_time_pffft.c",
-        "sp/src/test/fft_time_pffft.h"
-      ]
-      deps += [ ":pffft" ]
-    }
+executable("test_float_fft") {
+  public_configs = [ ":dl_config" ]
+  configs -= [
+    "//build/config/compiler:chromium_code",
+    "//build/config/compiler:assembler_debug_dir",
+  ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    ":no_integrated_as",
+  ]
+  sources = [
+    "sp/src/test/test_float_fft.c",
+    "sp/src/test/support/float_fft_neon.c",
+  ]
 
-    if (ckfft) {
-      defines += [ "HAVE_CKFFT" ]
-      sources += [
-        "sp/src/test/fft_time_ckfft.c",
-        "sp/src/test/fft_time_ckfft.h"
-      ]
-      deps += [ ":ckfft" ]
-    }
+  deps = [
+    ":dl",
+    ":test_utilities",
+ ]
+}
 
-    if (ffmpeg) {
-      defines += [ "HAVE_FFMPEG" ]
-      sources += [
-        "sp/src/test/fft_time_ffmpeg.c",
-        "sp/src/test/fft_time_ffmpeg.h"
-      ]
-      deps += [
-        ":ffmpeg-avcodec",
-        ":ffmpeg-avutil",
-      ]
-    }
+executable("test_float_rfft") {
+  public_configs = [ ":dl_config" ]
+  configs -= [
+    "//build/config/compiler:chromium_code",
+    "//build/config/compiler:assembler_debug_dir",
+  ]
+  configs += [
+    "//build/config/compiler:no_chromium_code",
+    ":no_integrated_as",
+  ]
 
-    if (ne10) {
-      defines += [ "HAVE_NE10" ]
-      sources += [
-        "sp/src/test/fft_time_ne10.c",
-        "sp/src/test/fft_time_ne10.h"
-      ]
-      deps += [
-        ":ne10"
-      ]
-    }
+  sources = [
+    "sp/src/test/test_float_rfft.c",
+    "sp/src/test/support/float_rfft_neon.c",
+    "sp/src/test/support/float_rfft_thresholds.h",
+  ]
+
+  deps = [
+    ":dl",
+    ":test_utilities",
+ ]
+
+}
+
+executable("test_fft_time") {
+  deps = []
+  defines = []
+
+  deps += [
+    ":dl",
+    ":test_utilities",
+  ]
+
+  sources = [
+    "sp/src/test/test_fft_time.c",
+  ]
+
+  if (openmax_big_float_fft) {
+    defines += [ "BIG_FFT_TABLE" ]
+  }
+
+  if (kissfft && current_cpu == "arm") {
+    defines += [ "HAVE_KISSFFT" ]
+    sources += [
+      "sp/src/test/fft_time_kissfft.c",
+      "sp/src/test/fft_time_kissfft.h"
+    ]
+    deps += [ ":kissfft" ]
+  }
+
+  if (pffft) {
+    defines += [ "HAVE_PFFFT" ]
+    sources += [
+      "sp/src/test/fft_time_pffft.c",
+      "sp/src/test/fft_time_pffft.h"
+    ]
+    deps += [ ":pffft" ]
+  }
+
+  if (ckfft) {
+    defines += [ "HAVE_CKFFT" ]
+    sources += [
+      "sp/src/test/fft_time_ckfft.c",
+      "sp/src/test/fft_time_ckfft.h"
+    ]
+    deps += [ ":ckfft" ]
+  }
+
+  if (ffmpeg) {
+    defines += [ "HAVE_FFMPEG" ]
+    sources += [
+      "sp/src/test/fft_time_ffmpeg.c",
+      "sp/src/test/fft_time_ffmpeg.h"
+    ]
+    deps += [
+      ":ffmpeg-avcodec",
+      ":ffmpeg-avutil",
+    ]
+  }
+
+  if (ne10) {
+    defines += [ "HAVE_NE10" ]
+    sources += [
+      "sp/src/test/fft_time_ne10.c",
+      "sp/src/test/fft_time_ne10.h"
+    ]
+    deps += [
+      ":ne10"
+    ]
   }
 }
