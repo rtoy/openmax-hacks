@@ -1737,7 +1737,6 @@ void ne10_fft_r2c_1d_float32_neon (ne10_fft_cpx_float32_t *fout,
                                    ne10_float32_t *fin,
                                    ne10_fft_r2c_cfg_float32_t cfg)
 {
-    typedef         ne10_float32_t REAL;
     typedef ne10_fft_cpx_float32_t CPLX;
 
     ne10_fft_cpx_float32_t * tmpbuf = cfg->buffer;
@@ -1772,7 +1771,6 @@ void ne10_fft_c2r_1d_float32_neon (ne10_float32_t *fout,
                                    ne10_fft_cpx_float32_t *fin,
                                    ne10_fft_r2c_cfg_float32_t cfg)
 {
-    typedef         ne10_float32_t REAL;
     typedef ne10_fft_cpx_float32_t CPLX;
 
     ne10_fft_cpx_float32_t * tmpbuf = cfg->buffer;
