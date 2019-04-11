@@ -20,7 +20,7 @@ declare_args() {
   if (current_cpu == "arm64") {
     pffft = true
     kissfft = false
-    ckfft = false
+    ckfft = true
     ffmpeg = false
     # Only RFFT works.  Don't know why
     ne10 = true
@@ -645,7 +645,10 @@ executable("test_fft_time") {
   }
 
   if (kissfft && current_cpu == "arm") {
-    defines += [ "HAVE_KISSFFT" ]
+    defines += [
+      "HAVE_KISSFFT",
+      "__ARM_HAVE_NEON"
+    ]
     sources += [
       "sp/src/test/fft_time_kissfft.c",
       "sp/src/test/fft_time_kissfft.h"
