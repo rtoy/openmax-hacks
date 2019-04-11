@@ -109,6 +109,7 @@ static inline void ScaleVector(OMX_F32* vectorData, unsigned length, unsigned ff
     vectorData[0] *= scale;
   }
 #else
+  unsigned m;
   float scale = 1.0f / fftSize;
   for (m = 0; m < length; ++m) {
       vectorData[m] *= scale;
