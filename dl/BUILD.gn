@@ -25,6 +25,14 @@ declare_args() {
     # Only RFFT works.  Don't know why
     ne10 = true
   }
+  if (current_cpu == "x86" || current_cpu == "x64") {
+    pffft = true
+    kissfft = false
+    ckfft = false
+    ffmpeg = false
+    # Only RFFT works.  Don't know why
+    ne10 = false
+  }
   ne10_arm64_inline_asm = false
 }
 
@@ -440,6 +448,9 @@ if (pffft) {
       "//build/config/compiler:no_chromium_code",
       ":no_integrated_as",
     ]
+    if (current_cpu == "x86" || current_cpu == "x64") {
+      defines = [ "_M_IX86"]
+    }
     sources = [
       "../third_party/other-fft/pffft/fftpack.c",
       "../third_party/other-fft/pffft/fftpack.h",
