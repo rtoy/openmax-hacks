@@ -1,7 +1,7 @@
 #ifndef TIMING_UTIL_H_
 #define TIMING_UTIL_H_
 
-#if defined(__arm__) || defined(__aarch64__)
+#if (defined(__arm__) || defined(__aarch64__)) && !defined(ARM_VFP_TEST)
 #include <arm_neon.h>
 #endif
 
@@ -76,7 +76,7 @@ void GenerateRealFloatSignal(OMX_F32* x, void* fft, int size,
  * = 2*|n| and set |fftSize| = |n|. 
  */
 static inline void ScaleVector(OMX_F32* vectorData, unsigned length, unsigned fftSize) {
-#if defined(__arm__) || defined(__aarch64__)
+#if (defined(__arm__) || defined(__aarch64__)) && !defined(ARM_VFP_TEST)
   float32_t* data = (float32_t*)vectorData;
   float32_t scale = 1.0f / fftSize;
 
