@@ -6,6 +6,14 @@ import("//build/config/android/config.gni")
 import("//build/config/arm.gni")
 
 declare_args() {
+  # Default FFT support
+  pffft = false
+  pffft_simd_disable = false
+  kissfft = false
+  ckfft = false
+  ffmpeg = false
+  ne10 = false
+  ne10_arm64_inline_asm = false
   # Override this value to build with small float FFT tables
   openmax_big_float_fft = true
   if (current_cpu == "arm") {
@@ -15,7 +23,7 @@ declare_args() {
     ckfft = true
     ffmpeg = true
     # Only RFFT works.  Don't know why
-    ne10 = true
+    #ne10 = true
   }
   if (current_cpu == "arm64") {
     pffft = true
@@ -33,7 +41,9 @@ declare_args() {
     # Only RFFT works.  Don't know why
     ne10 = false
   }
-  ne10_arm64_inline_asm = false
+  if (current_cpu == "mipsel") {
+    pffft = true
+  }
 }
 
 config("dl_config") {
@@ -448,8 +458,14 @@ if (pffft) {
       "//build/config/compiler:no_chromium_code",
       ":no_integrated_as",
     ]
+    defines = []
     if (current_cpu == "x86" || current_cpu == "x64") {
-      defines = [ "_M_IX86"]
+      defines += [ "_M_IX86"]
+    }
+    if (!arm_use_neon || pffft_simd_disable == true || current_cpu == "mipsel") {
+      # Turn off simd support since pffft doesn't support MIPS
+      # SIMD. (But the OpenMAX DL versino didn't either
+      defines += [ "PFFFT_SIMD_DISABLE" ]
     }
     sources = [
       "../third_party/other-fft/pffft/fftpack.c",
@@ -649,6 +665,7 @@ executable("test_fft_time") {
 
   sources = [
     "sp/src/test/test_fft_time.c",
+    "sp/src/test/timing_util.h",
   ]
 
   if (openmax_big_float_fft) {
@@ -706,5 +723,9 @@ executable("test_fft_time") {
     deps += [
       ":ne10"
     ]
+  }
+
+  if (!arm_use_neon) {
+    defines += [ "ARM_VFP_TEST" ]
   }
 }
