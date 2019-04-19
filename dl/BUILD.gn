@@ -468,8 +468,6 @@ if (pffft) {
       defines += [ "PFFFT_SIMD_DISABLE" ]
     }
     sources = [
-      "../third_party/other-fft/pffft/fftpack.c",
-      "../third_party/other-fft/pffft/fftpack.h",
       "../third_party/other-fft/pffft/pffft.c",
       "../third_party/other-fft/pffft/pffft.h",
     ]
@@ -695,6 +693,9 @@ executable("test_fft_time") {
 
   if (ckfft) {
     defines += [ "HAVE_CKFFT" ]
+    if (arm_use_neon) {
+      defines += [ "CKFFT_ARM_NEON" ]
+    }
     sources += [
       "sp/src/test/fft_time_ckfft.c",
       "sp/src/test/fft_time_ckfft.h"
